@@ -1,0 +1,4 @@
+npm install --global --production windows-build-tools@4.0.0
+
+// If only the windows-build-tools doesn't help
+npm config set msvs_version 2012 --global

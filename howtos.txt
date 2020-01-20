@@ -1,0 +1,9 @@
+- Build for production:
+    npm run build
+
+- Run production exe and see console.log(s)
+    * go to the .exe folder
+    * on cmd run "deeduplicator.exe --debug"
+
+- How to see contents inside the generated app.asar
+    npx asar extract app.asar destfolder
