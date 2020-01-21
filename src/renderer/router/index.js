@@ -19,7 +19,7 @@ export default new Router({
     },
     {
       path: '/compare',
-      component: require('@/views/CompareMedia').default
+      component: require('@/views/ComparingMedia/ComparingMedia.vue').default
     }
   ]
 })

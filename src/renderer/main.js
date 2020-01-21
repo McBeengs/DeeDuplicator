@@ -10,6 +10,8 @@ import router from './router'
 import store from './store'
 
 import BootstrapVue from 'bootstrap-vue'
+import VueLazyload from 'vue-lazyload'
+import SweetModal from 'sweet-modal-vue/src/plugin.js'
 
 if (!process.env.IS_WEB)
   Vue.use(require('vue-electron'))
@@ -17,6 +19,11 @@ if (!process.env.IS_WEB)
 Vue.config.productionTip = false
 
 Vue.use(BootstrapVue)
+Vue.use(VueLazyload, {
+  loading: '../assets/img-lazyload-spinner.gif',
+  attempt: 2
+})
+Vue.use(SweetModal)
 
 /* eslint-disable no-new */
 new Vue({

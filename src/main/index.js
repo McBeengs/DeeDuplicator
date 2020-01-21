@@ -28,10 +28,14 @@ function createWindow () {
   });
 
   mainWindow = windowManager.open("main", "Main Window", winURL, null, {
-    height: 563,
-    useContentSize: false,
     width: 1000,
+    height: 563,
+    minWidth: 1000,
+    minHeight: 563,
+    resizable: true,
+    useContentSize: false,
     webPreferences: {
+      webSecurity: false,
       nodeIntegration: true
     }
   });

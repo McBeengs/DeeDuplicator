@@ -12,9 +12,12 @@
 </script>
 
 <style lang="scss">
-  // Import Main styles for this application
-  @import '@/styles/bootstrap.scss';
-  @import '@/styles/app.scss';
+// Import Main styles for this application
+@import '@/styles/bootstrap.scss';
+@import '@/styles/app.scss';
 
-  
+// Fixing sweet-modal scroll when opening
+.sweet-modal, .sweet-content {
+  overflow-y: hidden;
+}
 </style>

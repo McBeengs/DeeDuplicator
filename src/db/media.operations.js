@@ -149,36 +149,34 @@ module.exports = class MediaOperations {
     }
 
     insertMediasCompared(mediaA, mediaB, algorithm, percentage) {
-        return new Promise((resolve) => {
-            try {
-                const result = db.query(
-                    "SELECT COUNT(*) AS Contains FROM comparison WHERE (a = ? AND b = ?) OR (b = ? AND a = ?) LIMIT 1",
-                    mediaA.id, mediaB.id, mediaA.id, mediaB.id
-                );
+        try {
+            const result = db.query(
+                "SELECT COUNT(*) AS Contains FROM comparison WHERE (a = ? AND b = ?) OR (b = ? AND a = ?) LIMIT 1",
+                mediaA.id, mediaB.id, mediaA.id, mediaB.id
+            );
 
-                const contains = (!result.length || result.length <= 0) ? 0 : result[0].Contains;
+            const contains = (!result.length || result.length <= 0) ? 0 : result[0].Contains;
 
-                if (contains <= 0) {
-                    let query = "INSERT INTO comparison (a, b, leven, hamming, dice) VALUES (?, ?, ?, ?, ?)";
+            if (contains <= 0) {
+                let query = "INSERT INTO comparison (a, b, leven, hamming, dice) VALUES (?, ?, ?, ?, ?)";
 
-                    switch (algorithm) {
-                        case "leven":
-                            db.execute(query, mediaA.id, mediaB.id, percentage, null, null);
-                            break;
-                        case "hamming":
-                            db.execute(query, mediaA.id, mediaB.id, null, percentage, null);
-                            break;
-                        case "dice":
-                            db.execute(query, mediaA.id, mediaB.id, null, null, percentage);
-                            break;
-                    }
+                switch (algorithm) {
+                    case "leven":
+                        db.execute(query, mediaA.id, mediaB.id, percentage, null, null);
+                        break;
+                    case "hamming":
+                        db.execute(query, mediaA.id, mediaB.id, null, percentage, null);
+                        break;
+                    case "dice":
+                        db.execute(query, mediaA.id, mediaB.id, null, null, percentage);
+                        break;
                 }
-
-                resolve(true);
-            } catch (ex) {
-                resolve(false);
             }
-        });
+
+            return true;
+        } catch (ex) {
+            return false;
+        }
     }
 
     getDuplicateMedias(algorithm, threshold) {
@@ -222,8 +220,9 @@ module.exports = class MediaOperations {
                     let group = [];
 
                     for (let j = 0; j < idGroup.length; j++) {
-                        const idMedia = idGroup[j];
-                        group.push(this.getMediaById(idMedia));
+                        let media = this.getMediaById(idGroup[j]);
+                        media.checked = false;
+                        group.push(media);
                     }
 
                     mediaGroups.push(group);

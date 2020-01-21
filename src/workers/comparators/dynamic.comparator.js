@@ -72,18 +72,12 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
             }
 
             const distance = await service.compareMedia(fileBeingCompared, fileToCompare, differenceAlgorithm);
-            if (distance >= threshold) {
-                newDupeFound(fileBeingCompared, fileToCompare, differenceAlgorithm, distance);
+            if (distance >= 0.55) {
+                db.insertMediasCompared(fileBeingCompared, fileToCompare, differenceAlgorithm, distance);
             }
         }, () => {
             return true;
         })
-    }
-
-    function newDupeFound(fileBeingCompared, fileToCompare, differenceAlgorithm, distance) {
-        db.insertMediasCompared(fileBeingCompared, fileToCompare, differenceAlgorithm, distance).then(() => {
-            console.error(`Dupe found for file [${fileBeingCompared.path}]`);
-        });
     }
 
     workerpool.worker({

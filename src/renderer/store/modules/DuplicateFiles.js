@@ -5,6 +5,9 @@ const DuplicateFiles = {
     getters: {
         getDuplicates(state) {
             return state.duplicates;
+        },
+        checkIfHasComparisonUnfinished(state) {
+            return state.duplicates.length > 0;
         }
     },
     mutations: {
@@ -13,8 +16,8 @@ const DuplicateFiles = {
         }
     },
     actions: {
-        setDuplicates({ commit }, duplicates) {
-            commit('setDuplicates', duplicates);
+        setDuplicates({ commit }, input) {
+            commit('setDuplicates', input.duplicates);
         }
     }
 }

@@ -10,6 +10,14 @@
                 </div>
             </div>
         </div>
+
+        <sweet-modal icon="warning" ref="modalComparisonInProgress">
+            There is already a comparison going on since the last time the app was closed.
+            Scanning again would override any decisions made about the duplicates checked. Are you sure?
+
+            <button slot="button" class="btn btn-warning" @click="startSearchProcess" style="margin-right: 10px; ">Scan again</button>
+            <button slot="button" class="btn btn-primary" @click="$router.push('/compare')">Continue comparison</button>
+        </sweet-modal>
     </div>
 </template>
 
@@ -34,6 +42,14 @@ export default {
             //     }
             //   );
 
+            if (store.getters.checkIfHasComparisonUnfinished) {
+                this.$refs.modalComparisonInProgress.open();
+            } else {
+                this.startSearchProcess();
+            }
+        },
+
+        startSearchProcess() {
             store.dispatch({
                 type: "setPreparedSearch",
                 preparedSearch: {
