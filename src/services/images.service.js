@@ -127,9 +127,9 @@ module.exports = class ImagesService {
         });
     }
 
-    async compareMedia(mediaA, mediaB, comparator) {
-        const pHashImageA = db.getImagePHash(mediaA.id);
-        const pHashImageB = db.getImagePHash(mediaB.id);
+    compareMedia(idMediaA, idMediaB, comparator) {
+        const pHashImageA = db.getImagePHash(idMediaA);
+        const pHashImageB = db.getImagePHash(idMediaB);
 
         let distance = 0;
         let bigger = 0;

@@ -148,30 +148,30 @@ module.exports = class MediaOperations {
         }
     }
 
-    insertMediasCompared(mediaA, mediaB, algorithm, percentage) {
+    insertMediasCompared(idMediaA, idMediaB, algorithm, percentage) {
         try {
-            const result = db.query(
-                "SELECT COUNT(*) AS Contains FROM comparison WHERE (a = ? AND b = ?) OR (b = ? AND a = ?) LIMIT 1",
-                mediaA.id, mediaB.id, mediaA.id, mediaB.id
-            );
+            // const result = db.query(
+            //     "SELECT COUNT(*) AS Contains FROM comparison WHERE (a = ? AND b = ?) OR (b = ? AND a = ?) LIMIT 1",
+            //     mediaA.id, mediaB.id, mediaA.id, mediaB.id
+            // );
 
-            const contains = (!result.length || result.length <= 0) ? 0 : result[0].Contains;
+            // const contains = (!result.length || result.length <= 0) ? 0 : result[0].Contains;
 
-            if (contains <= 0) {
+            // if (contains <= 0) {
                 let query = "INSERT INTO comparison (a, b, leven, hamming, dice) VALUES (?, ?, ?, ?, ?)";
 
                 switch (algorithm) {
                     case "leven":
-                        db.execute(query, mediaA.id, mediaB.id, percentage, null, null);
+                        db.execute(query, idMediaA, idMediaB, percentage, null, null);
                         break;
                     case "hamming":
-                        db.execute(query, mediaA.id, mediaB.id, null, percentage, null);
+                        db.execute(query, idMediaA, idMediaB, null, percentage, null);
                         break;
                     case "dice":
-                        db.execute(query, mediaA.id, mediaB.id, null, null, percentage);
+                        db.execute(query, idMediaA, idMediaB, null, null, percentage);
                         break;
                 }
-            }
+            // }
 
             return true;
         } catch (ex) {

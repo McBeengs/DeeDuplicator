@@ -17,17 +17,16 @@ let dupesFound = [];
 
 define(['workerpool/dist/workerpool'], function (workerpool) {
     async function compare(idFileBeingCompared, comparedIds, differenceAlgorithm, threshold) {
-        const fileBeingCompared = db.getMediaById(idFileBeingCompared);
-
         // Get the appropiate service for the file type
-        let ServiceObject = {}
-        for (let i = 0; i < mediaTable.length; i++) {
-            const type = mediaTable[i];
-            if (type.extensions.includes(fileBeingCompared.extension)) { // At least for now all files in slice are the same type
-                ServiceObject = require(`../../services/${type.service}`);
-                break;
-            }
-        }
+        // TODO: fix this later
+        let ServiceObject = require(`../../services/images.service`);
+        // for (let i = 0; i < mediaTable.length; i++) {
+        //     const type = mediaTable[i];
+        //     if (type.extensions.includes(fileBeingCompared.extension)) { // At least for now all files in slice are the same type
+        //         ServiceObject = require(`../../services/${type.service}`);
+        //         break;
+        //     }
+        // }
 
         const service = new ServiceObject();
 
@@ -36,9 +35,7 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
             if (idFileBeingCompared === idFileToCompare) {
                 return;
             }
-
-            const fileToCompare = db.getMediaById(idFileToCompare);
-
+            
             // Check if files were compared at least one time
             const comparison = db.mediasAlreadyCompared(idFileBeingCompared, idFileToCompare);
             if (comparison !== null) {
@@ -66,14 +63,14 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
                 }
             }
 
-            if (fileBeingCompared.filename === fileToCompare.filename &&
-                fileBeingCompared.size === fileToCompare.size) {
-                newDupeFound(fileBeingCompared, fileToCompare, differenceAlgorithm, 1);
-            }
+            // if (fileBeingCompared.filename === fileToCompare.filename &&
+            //     fileBeingCompared.size === fileToCompare.size) {
+            //     newDupeFound(fileBeingCompared, fileToCompare, differenceAlgorithm, 1);
+            // }
 
-            const distance = await service.compareMedia(fileBeingCompared, fileToCompare, differenceAlgorithm);
+            const distance = service.compareMedia(idFileBeingCompared, idFileToCompare, differenceAlgorithm);
             if (distance >= 0.55) {
-                db.insertMediasCompared(fileBeingCompared, fileToCompare, differenceAlgorithm, distance);
+                db.insertMediasCompared(idFileBeingCompared, idFileToCompare, differenceAlgorithm, distance);
             }
         }, () => {
             return true;

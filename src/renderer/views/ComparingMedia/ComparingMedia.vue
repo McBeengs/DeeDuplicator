@@ -27,8 +27,16 @@ export default {
         GroupLayout,
         EachGroupLayout
     },
-    mounted() {
+    created() {
         this.duplicateGroups = store.getters.getDuplicates;
+    },
+    mounted() {
+        window.addEventListener('unload', () => {
+            store.dispatch({
+                type: "setDuplicates",
+                duplicates: this.duplicateGroups
+            });
+        });
     },
     data() {
         return {
@@ -86,7 +94,7 @@ export default {
 <style lang="scss">
 .wrapper-comparing-media {
     .layout-container {
-        margin-left: 55px;
+        margin-left: 50px;
     }
 }
 </style>

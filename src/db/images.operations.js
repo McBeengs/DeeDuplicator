@@ -36,9 +36,9 @@ module.exports = class ImagesOperations {
         const result = db.query(`SELECT pHash FROM image WHERE idMedia = ? LIMIT 1`, idMedia);
 
         if (!result.length || result.length <= 0) {
-            resolve(0);
+            return 0;
         } else {
-            resolve(result[0].pHash)
+            return result[0].pHash;
         }
     }
 
