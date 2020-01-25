@@ -14,7 +14,6 @@
                         </p>
 
                         <div class="form-group">
-                            <label class="mr-sm-2">Pagination: </label>
                             <b-pagination
                                 v-model="currentPage"
                                 :total-rows="tableItems.length"
@@ -27,10 +26,11 @@
             </div>
         </div>
 
-        <b-table id="gridTable" :items="tableItems" :fields="fields" :per-page="filesPerPage"
-            :current-page="currentPage" :tbody-tr-class="rowClass">
+        <b-table id="gridTable" :items="tableItems" :fields="fields" :per-page="filesPerPage" 
+            :current-page="currentPage" :tbody-tr-class="rowClass" @row-clicked="rowClick">
             <template v-slot:cell(checked)="data" >
-                <input type="checkbox" v-model="data.item.checked" v-on:input="checkboxClick(data.item)">
+                <span v-if="data.item.checked"><i class="fas fa-trash-alt"></i></span>
+                <!-- <input type="checkbox" v-model="data.item.checked" v-on:input="checkboxClick(data.item)"> -->
             </template>
             <template v-slot:cell(fileName)="data" >
                 <button class="btn btn-link" @click="openFile(data.item.path)">
@@ -60,7 +60,7 @@ export default {
             ],
             optionsPerPageSelection: [50, 100, 1000, 5000, 10000, 1000000, 1000000000],
             tableItems: [],
-            currentPage: 0,
+            currentPage: 1,
 
             filesPerPage: 50,
             totalFilesSelected: 0,
@@ -95,8 +95,10 @@ export default {
             return item.cssClass;
         },
         
-        checkboxClick(item) {
-            if (!item.checked) {
+        rowClick(item) {
+            item.checked = !item.checked;
+
+            if (item.checked) {
                 this.totalFilesSelected++;
                 this.totalBytesSelected += item.size;
             } else {
@@ -141,6 +143,23 @@ export default {
 
     .odd {
         background-color: lightgrey;
+    }
+
+    .even:hover {
+        background-color: #eee;
+        cursor: pointer;
+    }
+
+    .odd:hover {
+        background-color: rgb(200, 200, 200);
+        cursor: pointer;
+    }
+
+    span i {
+        padding: 10px;
+        border-radius: 20px;
+        color: #eee;
+        background-color: rgba($color: red, $alpha: 0.6)
     }
 
     .header-container {

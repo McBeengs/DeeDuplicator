@@ -43,7 +43,7 @@ export default {
             duplicateGroups: [],
             menu: Menu,
 
-            viewActive: 'grid'
+            viewActive: 'eachGroup'
         }
     },
     methods: {
