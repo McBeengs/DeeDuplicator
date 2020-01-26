@@ -14,7 +14,7 @@ const extensions = process.argv[3];
 
 const comparator = "dynamic";
 const differenceAlgorithm = "hamming";
-const threshold = 0.8;
+const threshold = 0.6;
 
 const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.worker.js"), {
     minWorkers: 1,

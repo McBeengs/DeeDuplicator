@@ -38,7 +38,7 @@
                 </button>
             </template>
             <template v-slot:cell(size)="data" >{{ formatBytes(data.item.size) }}</template>
-            <template v-slot:cell(createDate)="data" >{{ formatDate(data.item.createDate) }}</template>
+            <template v-slot:cell(createDate)="data"><p style="min-width: 100px;"> {{ formatDate(data.item.createDate) }}</p></template>
         </b-table>
     </div>
 </template>
@@ -134,7 +134,12 @@ export default {
 <style lang="scss">
 .wrapper-grid-layout {
     table {
-        margin-top: 40px;
+        padding: 15px 15px 0px 15px;
+        margin-top: 55px;
+
+        p {
+            margin: 0;
+        }
     }
 
     .even {
@@ -165,7 +170,7 @@ export default {
     .header-container {
         position: fixed;
         width: 100%;
-        margin-top: -40px;
+        margin-top: -55px;
 
         .card {
             margin-bottom: 0;

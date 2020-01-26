@@ -78,6 +78,7 @@
     "vue-router": "^3.0.1",
     "vue-sidebar-menu": "^4.4.7",
     "vue-step-progress": "^0.3.1",
+    "vuebar": "0.0.20",
     "vuex": "^3.0.1",
     "vuex-electron": "^1.0.0",
     "workerpool": "^5.0.4"

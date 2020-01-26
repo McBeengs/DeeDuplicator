@@ -93,8 +93,11 @@ export default {
 
 <style lang="scss">
 .wrapper-comparing-media {
+    height: 100%;
+
     .layout-container {
         margin-left: 50px;
+        height: 100%;
     }
 }
 </style>

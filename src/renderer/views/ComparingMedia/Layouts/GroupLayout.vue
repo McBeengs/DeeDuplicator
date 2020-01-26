@@ -28,7 +28,7 @@
         <div class="groups-container">
             <div class="group-container row" v-for="(group, index) in getGroupsSlice()" v-bind:key="index">
                 <div class="col-xs-8 col-sm-4 col-md-4 col-lg-3 col-xl-3" v-for="(media) in group" v-bind:key="media.id">
-                    <media-pill :media="media" :onClick="onMediaClick"></media-pill>
+                    <media-pill :media="media" :onClick="onMediaClick" :showInfo="true"></media-pill>
                 </div>
                 <hr>
             </div>

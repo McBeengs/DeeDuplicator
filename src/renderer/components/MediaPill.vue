@@ -1,15 +1,23 @@
 <template>
-    <div class="card media-pill-wrapper" @click="onClick(media)">
-        <div class="card-body">
+    <div class="card media-pill-wrapper" @click="onCardClick">
+        <div class="card-body" :class="showInfo ? 'hover' : ''">
             <div class="thumb-wrapper">
+                <div class="arrows-comparator" v-if="!showInfo">
+                    <b-button variant="success" @click="onLeftClick(media)" size="sm">
+                        <span><i class="fas fa-arrow-left"></i></span>
+                    </b-button>
+                    <b-button variant="info" @click="onRightClick(media)" size="sm" style="float: right">
+                        <span><i class="fas fa-arrow-right"></i></span>
+                    </b-button>
+                </div>
                 <div class="file-thumbnail">
-                    <div class="checkbox-hover" v-if="media.checked">
+                    <div class="checkbox-hover" v-if="media.checked" :class="showInfo ? '' : 'margin-arrows'">
                         <span><i class="fas fa-trash-alt"></i></span>
                     </div>
                     <img v-lazy="media.path" />
                 </div>
             </div>
-            <div class="thumb-info">
+            <div class="thumb-info" v-if="showInfo">
                 <div class="thumb-info-value">
                     <h6 class="d-inline">Name: </h6>
                     <p class="d-inline">{{media.fileName}}</p>
@@ -33,7 +41,7 @@
 import moment from 'moment'
 
 export default {
-    props: ["media", "onClick"],
+    props: ["media", "onClick", "showInfo", "onLeftClick", "onRightClick"],
     data() {
         return {
 
@@ -55,6 +63,12 @@ export default {
 
         formatDate(date) {
             return moment(new Date(date)).format("YYYY/MM/DD");
+        },
+
+        onCardClick() {
+            if (this.onClick != undefined) {
+                this.onClick(this.media);
+            }
         }
     }
 }
@@ -98,6 +112,15 @@ export default {
         max-height: 80%;
     }
 
+    .arrows-comparator {
+        position: absolute;
+        width: 82%;
+    }
+
+    .margin-arrows {
+        margin-top: 35px;
+    }
+
     .checkbox-hover {
         position: absolute;
         
@@ -109,7 +132,7 @@ export default {
         }
     }
 
-    :hover {
+    .hover:hover {
         background: #eee;
         cursor: pointer;
     }

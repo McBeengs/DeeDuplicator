@@ -12,6 +12,7 @@ import store from './store'
 import BootstrapVue from 'bootstrap-vue'
 import VueLazyload from 'vue-lazyload'
 import SweetModal from 'sweet-modal-vue/src/plugin.js'
+import Vuebar from 'vuebar';
 
 import * as LazyloadSpinner from './assets/img-lazyload-spinner.gif'
 
@@ -26,6 +27,7 @@ Vue.use(VueLazyload, {
   attempt: 2
 })
 Vue.use(SweetModal)
+Vue.use(Vuebar)
 
 /* eslint-disable no-new */
 new Vue({
