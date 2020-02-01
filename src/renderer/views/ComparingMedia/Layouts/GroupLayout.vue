@@ -5,7 +5,7 @@
                 <div class="card-body">
                     <b-form inline>
                         <div class="form-group">
-                            <label class="mr-sm-2">Files per Page: </label>
+                            <label class="mr-sm-2">Groups per Page: </label>
                             <b-form-select v-model="filesPerPage" :options="optionsPerPageSelection"></b-form-select>
                         </div>
 

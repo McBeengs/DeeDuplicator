@@ -34,7 +34,8 @@ export function initializeSQLite() {
         b INTEGER NOT NULL,
         leven NUMERIC NULL,
         hamming NUMERIC NULL,
-        dice NUMERIC NULL
+        dice NUMERIC NULL,
+        whitelisted INTEGER NULL
     )`);
     comparisons.run();
 

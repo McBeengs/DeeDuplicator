@@ -49,12 +49,12 @@
                     <span><i class="fas fa-trash-alt"></i></span>
                     Delete left
                 </b-button>
-                <b-button>
+                <b-button @click="switchDirectories">
                     <span><i class="fas fa-cut"></i></span>
                     <span><i class="fas fa-paste"></i></span>
                     Switch directories
                 </b-button>
-                <b-button>
+                <b-button @click="swapFilenames">
                     <span><i class="fas fa-retweet"></i></span>
                     Swap filenames
                 </b-button>
@@ -75,6 +75,10 @@
 <script>
 import MediaPill from '../../../components/MediaPill.vue'
 import ImageCard from '../../../components/EachGroupLayout/ImageCard.vue'
+import RendererOperations from '../../../db/renderer.operations'
+const db = new RendererOperations();
+
+import * as fs from 'fs'
 
 export default {
     components: {
@@ -92,31 +96,72 @@ export default {
         }
     },
     beforeMount() {
+        if (this.duplicateGroups.length <= 0) {
+            this.mediaLeft = {size: 0, createDate: ''};
+            this.mediaRight = {size: 0, createDate: ''};
+            return;
+        }
         this.currentGroup = this.duplicateGroups[this.currentGroupIndex];
         this.mediaLeft = this.currentGroup[0];
         this.mediaRight = this.currentGroup[1]
     },
     methods: {
         nextGroupClick() {
-            this.currentGroupIndex++;
-            this.currentGroup = this.duplicateGroups[this.currentGroupIndex];
-            this.mediaLeft = this.currentGroup[0];
-            this.mediaRight = this.currentGroup[1]
+            if (this.duplicateGroups.length > 0) {
+                this.currentGroupIndex++;
+                this.currentGroup = this.duplicateGroups[this.currentGroupIndex];
+                this.mediaLeft = this.currentGroup[0];
+                this.mediaRight = this.currentGroup[1]
+            }
         },
         previousGroupClick() {
-            this.currentGroupIndex--;
-            this.currentGroup = this.duplicateGroups[this.currentGroupIndex];
-            this.mediaLeft = this.currentGroup[0];
-            this.mediaRight = this.currentGroup[1]
+            if (this.duplicateGroups.length > 0) {
+                this.currentGroupIndex--;
+                this.currentGroup = this.duplicateGroups[this.currentGroupIndex];
+                this.mediaLeft = this.currentGroup[0];
+                this.mediaRight = this.currentGroup[1]
+            }
         },
         onPillClick(media) {
             media.checked = !media.checked;
         },
         leftClick(media) {
             this.mediaLeft = media;
+            this.mediaLeft.checked = !this.mediaLeft.checked;
         },
         rightClick(media) {
             this.mediaRight = media;
+            this.mediaRight.checked = !this.mediaRight.checked;
+        },
+        switchDirectories() {
+            if (this.duplicateGroups.length > 0) {
+                const mediaLeftPathHolder = this.mediaLeft.path;
+                const mediaRightPathHolder = this.mediaRight.path;
+
+                const success = db.switchDirectories(this.mediaLeft, this.mediaRight);
+
+                if (success && (mediaLeftPathHolder !== mediaRightPathHolder)) {
+                    const tempPath = this.mediaLeft.path.replace(this.mediaLeft.fileName, "_temp_.tmp");
+                    fs.renameSync(mediaLeftPathHolder, tempPath);
+                    fs.renameSync(mediaRightPathHolder, this.mediaRight.path);
+                    fs.renameSync(tempPath, this.mediaLeft.path);
+                }
+            }
+        },
+        swapFilenames() {
+            if (this.duplicateGroups.length > 0) {
+                const mediaLeftPathHolder = this.mediaLeft.path;
+                const mediaRightPathHolder = this.mediaRight.path;
+
+                const success = db.swapFilenames(this.mediaLeft, this.mediaRight);
+
+                if (success && (mediaLeftPathHolder !== mediaRightPathHolder)) {
+                    const tempPath = this.mediaLeft.path.replace(this.mediaLeft.fileName, "_temp_.tmp");
+                    fs.renameSync(mediaLeftPathHolder, tempPath);
+                    fs.renameSync(mediaRightPathHolder, this.mediaRight.path);
+                    fs.renameSync(tempPath, this.mediaLeft.path);
+                }
+            }
         }
     },
     computed: {

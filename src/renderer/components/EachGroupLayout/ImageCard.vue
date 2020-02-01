@@ -60,7 +60,7 @@ export default {
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         },
         formatDate(date) {
-            return moment(new Date(date)).format("YYYY/MM/DD");
+            return date === '' ? "Not Available" : moment(new Date(date)).format("YYYY/MM/DD");
         },
         openFile() {
             shell.openItem(this.media.path);

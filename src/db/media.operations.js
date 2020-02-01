@@ -107,9 +107,6 @@ module.exports = class MediaOperations {
         )
         `);
 
-        
-
-        
         if (idsMedias.length <= 0) {
             values = "";
         } else {
@@ -120,7 +117,6 @@ module.exports = class MediaOperations {
 
             values = "VALUES " + values;
         }
-
 
         let query = `
         SELECT id FROM media WHERE id NOT IN (
@@ -181,7 +177,7 @@ module.exports = class MediaOperations {
 
     getDuplicateMedias(algorithm, threshold) {
         try {
-            let query = `SELECT a, b FROM comparison WHERE ${algorithm} >= ? ORDER BY a ASC`;
+            let query = `SELECT a, b FROM comparison WHERE ${algorithm} >= ? AND whitelisted IS null ORDER BY a ASC`;
             let result = db.query(query, threshold);
 
             if (!result.length || result.length <= 0) {

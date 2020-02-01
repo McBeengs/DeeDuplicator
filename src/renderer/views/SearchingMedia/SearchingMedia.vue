@@ -241,6 +241,7 @@ export default {
         justify-content:center;
         align-items:center;
         border: 0;
+        background-color: #FFF;
     }
     
     .step-progress__wrapper {

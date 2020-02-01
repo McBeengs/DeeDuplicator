@@ -39,15 +39,15 @@ export const Menu = [
         icon: 'far fa-check-square',
         id: 'ignore',
         child: [
-            {
-                title: "Apply custom rule",
-                icon: 'fas fa-scroll',
-                id: 'customRule'
-            },
-            {
-                component: separator,
-                id: 'ignore'
-            },
+            // {
+            //     title: "Apply custom rule",
+            //     icon: 'fas fa-scroll',
+            //     id: 'customRule'
+            // },
+            // {
+            //     component: separator,
+            //     id: 'ignore'
+            // },
             {
                 title: "Biggest size on group",
                 icon: 'fas fa-sort-numeric-up-alt',
@@ -84,5 +84,10 @@ export const Menu = [
         title: "Go back home",
         icon: 'fas fa-home',
         id: 'goHome'
+    },
+    {
+        title: "Finish comparison",
+        icon: 'fas fa-check',
+        id: 'finish'
     }
 ]
