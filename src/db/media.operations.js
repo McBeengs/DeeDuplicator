@@ -7,22 +7,6 @@ module.exports = class MediaOperations {
         db = new SQLiteService();
     }
 
-    checkIfFileExists(filePath) {
-        return new Promise((resolve) => {
-            const result = db.query("SELECT COUNT(*) AS Contains, Id FROM media WHERE path = ? LIMIT 1", filePath);
-
-            if (!result.length || result.length <= 0) {
-                resolve(0);
-            } else {
-                if (result[0].Contains > 0) {
-                    resolve(result[0].id)
-                } else {
-                    resolve(0);
-                }
-            }
-        });
-    }
-
     getMediaById(idMedia) {
         const result = db.query(`SELECT * FROM media WHERE id = ?`, idMedia);
         return result[0];
@@ -95,7 +79,25 @@ module.exports = class MediaOperations {
         }
     }
 
-    getOnlyNonComparedMedias() {
+    getAllAlreadyComparedIds() {
+        const idsMedias = db.query(`
+        SELECT DISTINCT a FROM (
+            SELECT DISTINCT a FROM comparison
+            UNION ALL
+            SELECT DISTINCT b FROM comparison
+        )
+        `);
+
+        let ids = [];
+
+        for (let i = 0; i < idsMedias.length; i++) {
+            ids.push(idsMedias[i].a);
+        }
+
+        return ids;
+    }
+
+    getNonComparedMedias() {
         let values = "";
         let separator = "";
 
@@ -118,11 +120,7 @@ module.exports = class MediaOperations {
             values = "VALUES " + values;
         }
 
-        let query = `
-        SELECT id FROM media WHERE id NOT IN (
-            ${values}
-        ) LIMIT 10000
-        `;
+        let query = `SELECT id FROM media WHERE id NOT IN (${values})`;
 
         const result = db.query(query);
 
@@ -144,31 +142,35 @@ module.exports = class MediaOperations {
         }
     }
 
-    insertMediasCompared(idMediaA, idMediaB, algorithm, percentage) {
+    insertMediasCompared(comparisons) {
         try {
-            // const result = db.query(
-            //     "SELECT COUNT(*) AS Contains FROM comparison WHERE (a = ? AND b = ?) OR (b = ? AND a = ?) LIMIT 1",
-            //     mediaA.id, mediaB.id, mediaA.id, mediaB.id
-            // );
+            let stringsToInsert = "";
+            console.log(comparisons.length)
 
-            // const contains = (!result.length || result.length <= 0) ? 0 : result[0].Contains;
+            for (let i = 0; i < comparisons.length; i++) {
+                const comparison = comparisons[i];
+                
+                if (i > 0) {
+                    stringsToInsert += ", ";
+                }
 
-            // if (contains <= 0) {
-                let query = "INSERT INTO comparison (a, b, leven, hamming, dice) VALUES (?, ?, ?, ?, ?)";
+                stringsToInsert += `(${comparison.idMediaA}, ${comparison.idMediaB}, `;
 
-                switch (algorithm) {
+                switch (comparison.algorithm) {
                     case "leven":
-                        db.execute(query, idMediaA, idMediaB, percentage, null, null);
+                        stringsToInsert += `'${comparison.percentage}', null, null)`
                         break;
                     case "hamming":
-                        db.execute(query, idMediaA, idMediaB, null, percentage, null);
+                        stringsToInsert += `null, '${comparison.percentage}', null)`
                         break;
                     case "dice":
-                        db.execute(query, idMediaA, idMediaB, null, null, percentage);
+                        stringsToInsert += `null, null, '${comparison.percentage}')`
                         break;
                 }
-            // }
-
+            }
+            
+            db.execute("INSERT INTO comparison (a, b, leven, hamming, dice) VALUES " + stringsToInsert);
+            
             return true;
         } catch (ex) {
             return false;
@@ -224,7 +226,7 @@ module.exports = class MediaOperations {
                     mediaGroups.push(group);
                 }
 
-                 return mediaGroups;
+                return mediaGroups;
             }
         } catch (ex) {
             return [];

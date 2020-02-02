@@ -30,7 +30,7 @@ const ipcMain = electron.remote.ipcMain;
 export default {
     data() {
         return {
-            input: 'D:\\Windows\\Desktop\\DeeDuplicator\\Test Cases'
+            input: '\\\\THEONETOYETBENA\\The Vault\\Artwork & Comics\\D33pW3b'
         };
     },
     methods: {

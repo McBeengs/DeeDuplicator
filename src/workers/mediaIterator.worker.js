@@ -14,14 +14,14 @@ const extensions = process.argv[3];
 
 const comparator = "dynamic";
 const differenceAlgorithm = "hamming";
-const threshold = 0.6;
+const threshold = 0.85;
 
 const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.worker.js"), {
     minWorkers: 1,
     maxWorkers: 10
 });
 
-const comparatorPool = workerpool.pool(path.resolve(__dirname, "./comparators/dynamic.comparator.js"), {
+const comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/${comparator}.comparator.js`), {
     minWorkers: 1,
     maxWorkers: 10
 });
@@ -93,27 +93,38 @@ function compareAlgorithm(comparator) {
         case "dynamic":
             dynamicAlgorithm();
             break;
-        // case "bruteforce":
-        //     bruteforceAlgorithm(mediaToCompare);
-        //     break;
+        case "bruteforce":
+            bruteforceAlgorithm(mediaToCompare);
+            break;
     }
 }
 
 let comparedIds = [];
 
+///////////////////////////// Dynamic algorithm ////////////////////////////////
+
 function dynamicAlgorithm() {
-    // Only compare those who haven't being compared already
-    // TODO: deal with the multiple compare algorithms, since now it's only checking if the comparison is there
-    mediaToCompare = db.getOnlyNonComparedMedias();
-
+    mediaToCompare = db.getNonComparedMedias();
+    comparedIds = db.getAllAlreadyComparedIds();
     process.send({ event: "filesToCompare", data: mediaToCompare.length });
-
-    processDynamicAlgorithmChunk();
 }
 
-function processDynamicAlgorithmChunk() {
+/////////////////////////// End Dynamic algorithm //////////////////////////////
 
-    let tempArray = mediaToCompare.splice(0, 10000);
+/////////////////////////// Bruteforce algorithm ///////////////////////////////
+
+function bruteforceAlgorithm() {
+    mediaToCompare = db.getNonComparedMedias();
+    comparedIds = db.getAllAlreadyComparedIds();
+    process.send({ event: "filesToCompare", data: mediaToCompare.length });
+
+    processBruteforceAlgorithmChunk();
+}
+
+function processBruteforceAlgorithmChunk() {
+    // Only compare those who haven't being compared already
+    // TODO: deal with the multiple compare hash algorithms, since now it's only checking if the comparison is there
+    let tempArray = mediaToCompare.splice(0, 1000);
 
     while (tempArray.length) {
         const idFileBeingCompared = tempArray.pop().id;
@@ -123,8 +134,9 @@ function processDynamicAlgorithmChunk() {
                 console.error(err);
                 process.send({ event: "onException", data: err });
             })
-            .then(() => {
+            .then((dupesFound) => {
                 process.send({ event: "onFileCompared", data: idFileBeingCompared });
+                db.insertMediasCompared(dupesFound)
             });
 
         comparedIds.push(idFileBeingCompared);
@@ -136,14 +148,13 @@ function processDynamicAlgorithmChunk() {
                 clearInterval(workerChecker);
 
                 if (mediaToCompare.length > 0) {
-                    processDynamicAlgorithmChunk(mediaToCompare);
+                    processDynamicAlgorithmChunk();
                 } else {
                     // await a little longer for all duplicates to be pushed
                     setTimeout(() => {
                         console.log("Workerpool finished. Compare algorithm done.");
                         process.send({
-                            event: "processFinished", data:
-                                db.getDuplicateMedias(differenceAlgorithm, threshold)
+                            event: "processFinished", data: db.getDuplicateMedias(differenceAlgorithm, threshold)
                         });
                     }, 5000);
                 }
@@ -151,6 +162,8 @@ function processDynamicAlgorithmChunk() {
         }
     }, 1000);
 }
+
+///////////////////////// End Bruteforce algorithm /////////////////////////////
 
 async function getAllFilesRecursively(base, ext = ['*'], files) {
     try {
