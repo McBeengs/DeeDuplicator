@@ -12,7 +12,7 @@ const db = new MediaOperations();
 const rootPath = process.argv[2];
 const extensions = process.argv[3];
 
-const comparator = "dynamic";
+const comparator = "bruteforce";
 const differenceAlgorithm = "hamming";
 const threshold = 0.85;
 

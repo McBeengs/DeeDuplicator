@@ -145,8 +145,7 @@ module.exports = class MediaOperations {
     insertMediasCompared(comparisons) {
         try {
             let stringsToInsert = "";
-            console.log(comparisons.length)
-
+            
             for (let i = 0; i < comparisons.length; i++) {
                 const comparison = comparisons[i];
                 
