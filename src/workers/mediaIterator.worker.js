@@ -148,7 +148,7 @@ function processBruteforceAlgorithmChunk() {
                 clearInterval(workerChecker);
 
                 if (mediaToCompare.length > 0) {
-                    processDynamicAlgorithmChunk();
+                    processBruteforceAlgorithmChunk();
                 } else {
                     // await a little longer for all duplicates to be pushed
                     setTimeout(() => {
