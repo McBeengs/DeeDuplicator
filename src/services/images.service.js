@@ -102,7 +102,7 @@ const Hashes = {
 
 module.exports = class ImagesService {
     processMedia(media) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             // Check if image was already captured last time
             // db.checkIfImageExists(media.id).then(result => {
             //     if (result.id > 0) {
@@ -117,8 +117,35 @@ module.exports = class ImagesService {
                     return;
                 }
 
-                db.insertImage({ idMedia: media.id, pHash: data }).then(idInserted => {
-                    resolve(true);
+                Jimp.read(media.path).then((image) => {
+                    try {
+                        const size = 28;
+                        image
+                            .resize(size, size)
+                            .grayscale().contrast(1); // make pure black and white pixels, no gray
+                        
+
+                        let pixels = '';
+                        for (let y = 0; y < size; y++) {
+                            for (let x = 0; x < size; x++) {
+                                pixels += image.getPixelColor(x, y) === 255 ? '1' : '0'
+                            }
+                        }
+                        const bigInteger = parseInt(pixels, 2);
+
+                        // image.writeAsync(media.path.substring(0, media.path.lastIndexOf("\\")) + `\\test-${Math.random() * 1000 }.jpg`).then(() => {
+                        //     db.insertImage({ idMedia: media.id, lowResHash: bigInteger, pHash: data }).then(idInserted => {
+                        //         resolve(true);
+                        //     });
+                        // });
+
+                        db.insertImage({ idMedia: media.id, lowResHash: bigInteger, pHash: data }).then(idInserted => {
+                            resolve(true);
+                        });
+                    } catch (err) {
+                        console.error(`Error while getting low res hash of file [${media.path}]. Jimp was used but failed. The file will have to be ignored.`);
+                        reject(err);
+                    }
                 });
             }).catch((rejectReason) => {
                 // Tried co hash the image but failed, even on the failsafes

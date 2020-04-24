@@ -12,7 +12,7 @@ const db = new MediaOperations();
 const rootPath = process.argv[2];
 const extensions = process.argv[3];
 
-const comparator = "bruteforce";
+const comparator = "lsh";
 const differenceAlgorithm = "hamming";
 const threshold = 0.85;
 
@@ -94,7 +94,10 @@ function compareAlgorithm(comparator) {
             dynamicAlgorithm();
             break;
         case "bruteforce":
-            bruteforceAlgorithm(mediaToCompare);
+            bruteforceAlgorithm();
+            break;
+        case "lsh":
+            lshAlgorithm();
             break;
     }
 }
@@ -164,6 +167,42 @@ function processBruteforceAlgorithmChunk() {
 }
 
 ///////////////////////// End Bruteforce algorithm /////////////////////////////
+
+/////////////////////////////// LSH algorithm //////////////////////////////////
+
+function lshAlgorithm() {
+    mediaToCompare = db.getNonComparedMedias();
+    comparedIds = db.getAllAlreadyComparedIds();
+    process.send({ event: "filesToCompare", data: mediaToCompare.length });
+
+    comparatorPool.exec('compare', [mediaToCompare, comparedIds, differenceAlgorithm, threshold])
+        .catch(err => {
+            console.error(err);
+            process.send({ event: "onException", data: err });
+        })
+        .then((dupesFound) => {
+            // process.send({ event: "onFileCompared", data: idFileBeingCompared });
+            // db.insertMediasCompared(dupesFound)
+        });
+
+    const workerChecker = setInterval(() => {
+        if (comparatorPool.stats().pendingTasks <= 0) {
+            comparatorPool.terminate(false).then(() => {
+                clearInterval(workerChecker);
+
+                // await a little longer for all duplicates to be pushed
+                setTimeout(() => {
+                    console.log("Workerpool finished. Compare algorithm done.");
+                    process.send({
+                        event: "processFinished", data: db.getDuplicateMedias(differenceAlgorithm, threshold)
+                    });
+                }, 5000);
+            });
+        }
+    }, 1000);
+}
+
+///////////////////////////// End LSH algorithm ////////////////////////////////
 
 async function getAllFilesRecursively(base, ext = ['*'], files) {
     try {

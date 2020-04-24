@@ -49,6 +49,7 @@ export function initializeSQLite() {
     CREATE TABLE IF NOT EXISTS image (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         idMedia INTEGER NOT NULL,
+        lowResHash VARCHAR(24) NOT NULL,
         pHash TEXT NULL
     )`);
     image.run();

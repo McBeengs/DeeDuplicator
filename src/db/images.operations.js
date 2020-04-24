@@ -26,7 +26,7 @@ module.exports = class ImagesOperations {
     insertImage(image) {
         return new Promise((resolve) => {
             const result =
-                db.execute(`INSERT INTO image (idMedia, pHash) VALUES (?, ?)`, image.idMedia, image.pHash);
+                db.execute(`INSERT INTO image (idMedia, lowResHash, pHash) VALUES (?, ?, ?)`, image.idMedia, image.lowResHash, image.pHash);
 
             resolve(result.lastInsertRowid);
         })
