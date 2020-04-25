@@ -154,8 +154,8 @@ module.exports = class ImagesService {
         });
     }
 
-    getVector(media) {
-        return db.getImageVector(media);
+    getVectors(medias) {
+        return db.getVectors(medias);
     }
 
     compareMedia(idMediaA, idMediaB, comparator) {

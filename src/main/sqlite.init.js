@@ -45,6 +45,14 @@ export function initializeSQLite() {
     )`);
     tempFiles.run();
 
+    const tempFiles = db.prepare(`
+    CREATE TABLE IF NOT EXISTS tempVectors (
+        xAxis VARCHAR(100) NOT NULL,
+        yAxis VARCHAR(100) NOT NULL,
+        idMedia INTEGER NOT NULL,
+    )`);
+    tempFiles.run();
+
     const image = db.prepare(`
     CREATE TABLE IF NOT EXISTS image (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

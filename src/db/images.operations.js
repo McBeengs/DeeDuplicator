@@ -42,13 +42,33 @@ module.exports = class ImagesOperations {
         }
     }
 
-    getImageVector(idMedia) {
-        const result = db.query(`SELECT size, lowResHash FROM media INNER JOIN image ON image.idMedia = media.id WHERE idMedia = ? LIMIT 1`, idMedia);
+    getVectors(idsMedias) {
+        let values = "";
+        let separator = "";
+
+        if (idsMedias.length <= 0) {
+            values = "";
+        } else {
+            for (let i = 0; i < idsMedias.length; i++) {
+                values += separator + `(${idsMedias[i]})`;
+                separator = ","
+            }
+
+            values = "VALUES " + values;
+        }
+
+
+        const result = db.query(`SELECT idMedia, size, lowResHash FROM media INNER JOIN image ON image.idMedia = media.id WHERE idMedia IN (${values})`);
 
         if (!result.length || result.length <= 0) {
             return 0;
         } else {
-            return [ result[0].size, result[0].lowResHash ];
+            let results = [];
+
+            for (let i = 0; i < result.length; i++) {
+                results.push({ xAxis: result[i].size, yAxis: result[i].lowResHash, id: result[i].idMedia });
+            }
+            return results;
         }
     }
 

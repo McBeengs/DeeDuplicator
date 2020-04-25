@@ -79,6 +79,15 @@ module.exports = class MediaOperations {
         }
     }
 
+    clearTempVectorsTable() {
+        try {
+            db.execute("DELETE FROM tempVectors");
+            return true;
+        } catch (ex) {
+            return false;
+        }
+    }
+
     getAllAlreadyComparedIds() {
         const idsMedias = db.query(`
         SELECT DISTINCT a FROM (

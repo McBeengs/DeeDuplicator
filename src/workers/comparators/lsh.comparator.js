@@ -39,12 +39,14 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
             
             const distance = service.compareMedia(idFileBeingCompared, idFileToCompare, differenceAlgorithm);
             if (distance >= threshold) {
-                dupesFound.push({ 
+                const dupe = { 
                     idMediaA: idFileBeingCompared, 
                     idMediaB: idFileToCompare,
                     algorithm: differenceAlgorithm,
                     percentage: distance
-                });
+                };
+                console.log("Dupe found", dupe);
+                dupesFound.push(dupe);
             }
         }, () => {
             return true;

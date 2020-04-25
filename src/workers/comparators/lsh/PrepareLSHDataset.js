@@ -40,18 +40,28 @@ const PrepareLSHDataset = {
             }
             
             const lsh = new LSHMinHash(stages, buckets, size);
-
-            let dictionary = [];
+            const ids = [];
 
             for (let i = 0; i < mediaToCompare.length; i++) {
-                const vector = service.getVector(mediaToCompare[i].id);
-                let hash = lsh.hash(vector);
+                ids.push(mediaToCompare[i].id);
+            }
+
+            const vectors = service.getVectors(ids);
+
+            // Empty the datasets to release memory
+            mediaToCompare = [];
+            comparedIds = [];
+            let dictionary = [];
+
+            while (vectors.length) {
+                const vector = vectors.pop();
+                let hash = lsh.hash([vector.xAxis, vector.yAxis]);
                 
                 if (dictionary[hash[1]]) {
-                    dictionary[hash[1]].push(mediaToCompare[i].id);
+                    dictionary[hash[1]].push(vector.idMedia);
                 } else {
                     let array = [];
-                    array.push(mediaToCompare[i].id);
+                    array.push(vector.idMedia);
                     dictionary[hash[1]] = array;
                 }
             }

@@ -55,7 +55,7 @@ function processFilesChunk() {
             .catch(err => {
                 console.error(err);
                 process.send({ event: "onException", data: err });
-                process.send({ event: "onFileProcessed", data: undefined });
+                process.send({ event: "onFileProcessed", data: 0 });
             })
             .then((result, error) => {
                 process.send({ event: "onFileProcessed", data: result.id });
@@ -177,14 +177,18 @@ function processBruteforceAlgorithmChunk() {
 
 /////////////////////////////// LSH algorithm //////////////////////////////////
 
+let buckets = [];
+
 function lshAlgorithm() {
     comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/lsh.comparator.js`), {
         minWorkers: 1,
         maxWorkers: 10
     });
 
+    db.clearTempVectorsTable();
+
     const prepare = require("./comparators/lsh/PrepareLSHDataset");
-    const buckets = prepare.getBuckets();
+    buckets = prepare.getBuckets();
 
     let totalSize = 0;
 
@@ -194,25 +198,29 @@ function lshAlgorithm() {
 
     process.send({ event: "filesToCompare", data: totalSize });
 
-    for (let i = 0; i < buckets.length; i++) {
-        const bucket = buckets[i];
-        let comparedBucketIds = [];
+    processLshAlgorithmChunk();
+}
 
-        while (bucket.length) {
-            const idFileBeingCompared = bucket.pop();
+function processLshAlgorithmChunk() {
+    const bucket = buckets.pop();
+    console.log("Bucket", bucket)
 
-            comparatorPool.exec('compare', [idFileBeingCompared, comparedBucketIds, differenceAlgorithm, threshold])
-                .catch(err => {
-                    console.error(err);
-                    process.send({ event: "onException", data: err });
-                })
-                .then((dupesFound) => {
-                    process.send({ event: "onFileCompared", data: idFileBeingCompared });
-                    db.insertMediasCompared(dupesFound)
-                });
+    let comparedBucketIds = [];
 
-            comparedBucketIds.push(idFileBeingCompared);
-        }
+    while (bucket.length) {
+        const idFileBeingCompared = bucket.pop();
+
+        comparatorPool.exec('compare', [idFileBeingCompared, comparedBucketIds, differenceAlgorithm, threshold])
+            .catch(err => {
+                console.error(err);
+                process.send({ event: "onException", data: err });
+            })
+            .then((dupesFound) => {
+                process.send({ event: "onFileCompared", data: idFileBeingCompared });
+                db.insertMediasCompared(dupesFound)
+            });
+
+        comparedBucketIds.push(idFileBeingCompared);
     }
 
     const workerChecker = setInterval(() => {
@@ -220,18 +228,21 @@ function lshAlgorithm() {
             comparatorPool.terminate(false).then(() => {
                 clearInterval(workerChecker);
 
-                // await a little longer for all duplicates to be pushed
-                setTimeout(() => {
-                    console.log("Workerpool finished. Compare algorithm done.");
-                    process.send({
-                        event: "processFinished", data: db.getDuplicateMedias(differenceAlgorithm, threshold)
-                    });
-                }, 5000);
+                if (buckets.length > 0) {
+                    processLshAlgorithmChunk();
+                } else {
+                    // await a little longer for all duplicates to be pushed
+                    setTimeout(() => {
+                        console.log("Workerpool finished. Compare algorithm done.");
+                        process.send({
+                            event: "processFinished", data: db.getDuplicateMedias(differenceAlgorithm, threshold)
+                        });
+                    }, 5000);
+                }
             });
         }
     }, 1000);
 }
-
 ///////////////////////////// End LSH algorithm ////////////////////////////////
 
 async function getAllFilesRecursively(base, ext = ['*'], files) {
