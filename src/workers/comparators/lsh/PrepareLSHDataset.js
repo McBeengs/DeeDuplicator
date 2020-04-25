@@ -58,10 +58,10 @@ const PrepareLSHDataset = {
                 let hash = lsh.hash([vector.xAxis, vector.yAxis]);
                 
                 if (dictionary[hash[1]]) {
-                    dictionary[hash[1]].push(vector.idMedia);
+                    dictionary[hash[1]].push(vector.id);
                 } else {
                     let array = [];
-                    array.push(vector.idMedia);
+                    array.push(vector.id);
                     dictionary[hash[1]] = array;
                 }
             }

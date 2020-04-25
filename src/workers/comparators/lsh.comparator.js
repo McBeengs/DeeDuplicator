@@ -45,8 +45,8 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
                     algorithm: differenceAlgorithm,
                     percentage: distance
                 };
-                console.log("Dupe found", dupe);
                 dupesFound.push(dupe);
+                console.log("Dupe found", dupe);
             }
         }, () => {
             return true;

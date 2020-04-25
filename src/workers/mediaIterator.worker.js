@@ -203,7 +203,6 @@ function lshAlgorithm() {
 
 function processLshAlgorithmChunk() {
     const bucket = buckets.pop();
-    console.log("Bucket", bucket)
 
     let comparedBucketIds = [];
 

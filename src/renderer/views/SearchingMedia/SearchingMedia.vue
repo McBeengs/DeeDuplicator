@@ -134,7 +134,6 @@ export default {
                         this.totalSteps = compareCount;
                     },
                     onFileCompared: (file) => {
-                        console.log(file);
                         this.completedSteps++;
                         this.message = `Comparing files. ${this.totalSteps - this.completedSteps} files remaining...`
 
