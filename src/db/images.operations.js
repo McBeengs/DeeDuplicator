@@ -42,6 +42,16 @@ module.exports = class ImagesOperations {
         }
     }
 
+    getImageVector(idMedia) {
+        const result = db.query(`SELECT size, lowResHash FROM media INNER JOIN image ON image.idMedia = media.id WHERE idMedia = ? LIMIT 1`, idMedia);
+
+        if (!result.length || result.length <= 0) {
+            return 0;
+        } else {
+            return [ result[0].size, result[0].lowResHash ];
+        }
+    }
+
     close() {
         db.close();
     }

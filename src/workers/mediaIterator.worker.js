@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 const workerpool = require('workerpool');
-const _ = require('lodash');
+// const _ = require('lodash');
 
 const MediaOperations = require("../db/media.operations");
 const db = new MediaOperations();
@@ -21,10 +21,7 @@ const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.
     maxWorkers: 10
 });
 
-const comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/${comparator}.comparator.js`), {
-    minWorkers: 1,
-    maxWorkers: 10
-});
+let comparatorPool;
 
 function entryPoint() {
     try {
@@ -107,6 +104,11 @@ let comparedIds = [];
 ///////////////////////////// Dynamic algorithm ////////////////////////////////
 
 function dynamicAlgorithm() {
+    comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/dynamic.comparator.js`), {
+        minWorkers: 1,
+        maxWorkers: 10
+    });
+
     mediaToCompare = db.getNonComparedMedias();
     comparedIds = db.getAllAlreadyComparedIds();
     process.send({ event: "filesToCompare", data: mediaToCompare.length });
@@ -117,6 +119,11 @@ function dynamicAlgorithm() {
 /////////////////////////// Bruteforce algorithm ///////////////////////////////
 
 function bruteforceAlgorithm() {
+    comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/bruteforce.comparator.js`), {
+        minWorkers: 1,
+        maxWorkers: 10
+    });
+
     mediaToCompare = db.getNonComparedMedias();
     comparedIds = db.getAllAlreadyComparedIds();
     process.send({ event: "filesToCompare", data: mediaToCompare.length });
@@ -171,19 +178,42 @@ function processBruteforceAlgorithmChunk() {
 /////////////////////////////// LSH algorithm //////////////////////////////////
 
 function lshAlgorithm() {
-    mediaToCompare = db.getNonComparedMedias();
-    comparedIds = db.getAllAlreadyComparedIds();
-    process.send({ event: "filesToCompare", data: mediaToCompare.length });
+    comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/lsh.comparator.js`), {
+        minWorkers: 1,
+        maxWorkers: 10
+    });
 
-    comparatorPool.exec('compare', [mediaToCompare, comparedIds, differenceAlgorithm, threshold])
-        .catch(err => {
-            console.error(err);
-            process.send({ event: "onException", data: err });
-        })
-        .then((dupesFound) => {
-            // process.send({ event: "onFileCompared", data: idFileBeingCompared });
-            // db.insertMediasCompared(dupesFound)
-        });
+    const prepare = require("./comparators/lsh/PrepareLSHDataset");
+    const buckets = prepare.getBuckets();
+
+    let totalSize = 0;
+
+    for (let i = 0; i < buckets.length; i++) {
+        totalSize += buckets[i].length;
+    }
+
+    process.send({ event: "filesToCompare", data: totalSize });
+
+    for (let i = 0; i < buckets.length; i++) {
+        const bucket = buckets[i];
+        let comparedBucketIds = [];
+
+        while (bucket.length) {
+            const idFileBeingCompared = bucket.pop();
+
+            comparatorPool.exec('compare', [idFileBeingCompared, comparedBucketIds, differenceAlgorithm, threshold])
+                .catch(err => {
+                    console.error(err);
+                    process.send({ event: "onException", data: err });
+                })
+                .then((dupesFound) => {
+                    process.send({ event: "onFileCompared", data: idFileBeingCompared });
+                    db.insertMediasCompared(dupesFound)
+                });
+
+            comparedBucketIds.push(idFileBeingCompared);
+        }
+    }
 
     const workerChecker = setInterval(() => {
         if (comparatorPool.stats().pendingTasks <= 0) {

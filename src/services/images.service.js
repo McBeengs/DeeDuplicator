@@ -154,6 +154,10 @@ module.exports = class ImagesService {
         });
     }
 
+    getVector(media) {
+        return db.getImageVector(media);
+    }
+
     compareMedia(idMediaA, idMediaB, comparator) {
         const pHashImageA = db.getImagePHash(idMediaA);
         const pHashImageB = db.getImagePHash(idMediaB);
