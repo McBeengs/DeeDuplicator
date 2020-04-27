@@ -25,20 +25,32 @@ const PrepareLSHDataset = {
             let totalSize = (mediaToCompare.length + comparedIds.length);
             let stages = 2;
             let size = totalSize;
-            let buckets = totalSize / 500;
+            let buckets = totalSize / 2000;
 
-            if (buckets <= 0) { // less than 500 medias
-                buckets = totalSize / 100;
+            if (buckets <= 0) { // less than 2000 medias
+                buckets = totalSize / 1000;
 
-                if (buckets <= 0) { // less than 100 medias
-                    buckets = totalSize / 10;
+                if (buckets <= 0) { // less than 1000 medias
+                    buckets = totalSize / 500;
 
-                    if (buckets <= 0) { // less than 10 medias
-                        buckets = 2;
+                    if (buckets <= 0) { // less than 500 medias
+                        buckets = totalSize / 100;
+        
+                        if (buckets <= 0) { // less than 100 medias
+                            buckets = totalSize / 10;
+        
+                            if (buckets <= 0) { // less than 10 medias
+                                buckets = 2;
+                            }
+                        }
                     }
                 }
             }
-            
+
+            if (buckets === 1) {
+                buckets = 5;
+            }
+
             const lsh = new LSHMinHash(stages, buckets, size);
             const ids = [];
 

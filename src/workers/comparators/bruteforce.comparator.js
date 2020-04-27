@@ -30,13 +30,16 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
 
         const service = new ServiceObject();
 
-        await async.each(comparedIds, async (idFileToCompare) => {
+        const fileBeingCompared = service.getMedia(idFileBeingCompared);
+        const comparedFiles = service.getMedias(comparedIds);
+
+        await async.each(comparedFiles, async (fileToCompare) => {
             // if same id == same exact file at the same path. ingnore
-            if (idFileBeingCompared === idFileToCompare) {
+            if (fileBeingCompared.id === fileToCompare.id) {
                 return;
             }
             
-            const distance = service.compareMedia(idFileBeingCompared, idFileToCompare, differenceAlgorithm);
+            const distance = service.compareMedia(fileBeingCompared, fileToCompare, differenceAlgorithm);
             if (distance >= threshold) {
                 dupesFound.push({ 
                     idMediaA: idFileBeingCompared, 

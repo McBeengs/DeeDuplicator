@@ -12,6 +12,25 @@ module.exports = class MediaOperations {
         return result[0];
     }
 
+    getMediasByIds(idsMedias) {
+        let values = "";
+        let separator = "";
+
+        if (idsMedias.length <= 0) {
+            values = "";
+        } else {
+            for (let i = 0; i < idsMedias.length; i++) {
+                values += separator + `(${idsMedias[i]})`;
+                separator = ","
+            }
+
+            values = "VALUES " + values;
+        }
+
+        const result = db.query(`SELECT * FROM media WHERE id IN (${values})`);
+        return result;
+    }
+
     insertMedia(media) {
         return new Promise((resolve) => {
             const result =
@@ -76,15 +95,6 @@ module.exports = class MediaOperations {
             return [];
         } else {
             return result
-        }
-    }
-
-    clearTempVectorsTable() {
-        try {
-            db.execute("DELETE FROM tempVectors");
-            return true;
-        } catch (ex) {
-            return false;
         }
     }
 
@@ -153,10 +163,17 @@ module.exports = class MediaOperations {
 
     insertMediasCompared(comparisons) {
         try {
+            if (comparisons.length <= 0) {
+                return true;
+            }
+
+            // Remove possible duplicates on comparisons
+            const uniqueComparisons = comparisons.filter((value, index, self) => { return self.indexOf(value) === index; });
+
             let stringsToInsert = "";
             
-            for (let i = 0; i < comparisons.length; i++) {
-                const comparison = comparisons[i];
+            for (let i = 0; i < uniqueComparisons.length; i++) {
+                const comparison = uniqueComparisons[i];
                 
                 if (i > 0) {
                     stringsToInsert += ", ";
@@ -174,14 +191,51 @@ module.exports = class MediaOperations {
                     case "dice":
                         stringsToInsert += `null, null, '${comparison.percentage}')`
                         break;
+                    default:
+                        stringsToInsert += `'${comparison.percentage}', '${comparison.percentage}', '${comparison.percentage}')`
+                        break;
                 }
             }
+
+            // db.executeMultiple(`
+            // CREATE TEMPORARY TABLE IF NOT EXISTS tempComparison (
+            //     a INTEGER NOT NULL,
+            //     b INTEGER NOT NULL,
+            //     leven NUMERIC NULL,
+            //     hamming NUMERIC NULL,
+            //     dice NUMERIC NULL,
+            //     whitelisted INTEGER NULL
+            // );
             
-            db.execute("INSERT INTO comparison (a, b, leven, hamming, dice) VALUES " + stringsToInsert);
+            // INSERT INTO tempComparison (a, b, leven, hamming, dice) VALUES ${stringsToInsert};
+            
+            // INSERT INTO comparison (a, b, leven, hamming, dice)
+            // SELECT DISTINCT t.a, t.b, t.leven, t.hamming, t.dice FROM tempComparison t
+            // LEFT JOIN comparison c ON c.a = t.a AND c.b = t.b
+            // WHERE c.a IS NULL;
+            // `);
+            
+            db.execute("INSERT INTO tempComparison (a, b, leven, hamming, dice) VALUES " + stringsToInsert);
             
             return true;
         } catch (ex) {
+            console.error(ex);
             return false;
+        }
+    }
+
+    consolidateComparisons() {
+        try {
+            db.executeMultiple(`
+                INSERT INTO comparison (a, b, leven, hamming, dice)
+                SELECT DISTINCT t.a, t.b, t.leven, t.hamming, t.dice FROM tempComparison t
+                LEFT JOIN comparison c ON c.a = t.a AND c.b = t.b
+                WHERE c.a IS NULL;
+
+                DELETE FROM tempComparison
+            `);
+        } catch (ex) {
+            console.error(ex);
         }
     }
 

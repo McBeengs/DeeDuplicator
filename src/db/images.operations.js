@@ -7,6 +7,60 @@ module.exports = class ImagesOperations {
         db = new SQLiteService();
     }
 
+    getImage(idMedia) {
+        const result = db.query(`
+            SELECT 
+                media.id,
+                media.fileName,
+                media.extension,
+                media.size,
+                image.lowResHash,
+                image.pHash
+            FROM media
+            INNER JOIN image ON image.idMedia = media.id 
+            WHERE idMedia = ? LIMIT 1`, idMedia);
+
+        if (!result.length || result.length <= 0) {
+            return 0;
+        } else {
+            return result[0];
+        }
+    }
+
+    getImages(idsMedias) {
+        let values = "";
+        let separator = "";
+
+        if (idsMedias.length <= 0) {
+            values = "";
+        } else {
+            for (let i = 0; i < idsMedias.length; i++) {
+                values += separator + `(${idsMedias[i]})`;
+                separator = ","
+            }
+
+            values = "VALUES " + values;
+        }
+        
+        const result = db.query(`
+            SELECT 
+                media.id,
+                media.fileName,
+                media.extension,
+                media.size,
+                image.lowResHash,
+                image.pHash
+            FROM media
+            INNER JOIN image ON image.idMedia = media.id 
+            WHERE idMedia IN (${values})`);
+
+        if (!result.length || result.length <= 0) {
+            return 0;
+        } else {
+            return result;
+        }
+    }
+
     checkIfImageExists(idMedia) {
         return new Promise((resolve) => {
             const result = db.query("SELECT pHash, Id FROM image WHERE idMedia = ? LIMIT 1", idMedia);
@@ -56,7 +110,6 @@ module.exports = class ImagesOperations {
 
             values = "VALUES " + values;
         }
-
 
         const result = db.query(`SELECT idMedia, size, lowResHash FROM media INNER JOIN image ON image.idMedia = media.id WHERE idMedia IN (${values})`);
 

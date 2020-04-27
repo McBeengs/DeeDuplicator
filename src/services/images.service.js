@@ -101,6 +101,14 @@ const Hashes = {
 }
 
 module.exports = class ImagesService {
+    getMedia(idMedia) {
+        return db.getImage(idMedia);
+    }
+
+    getMedias(idMedias) {
+        return db.getImages(idMedias);
+    }
+
     processMedia(media) {
         return new Promise((resolve, reject) => {
             // Check if image was already captured last time
@@ -158,9 +166,29 @@ module.exports = class ImagesService {
         return db.getVectors(medias);
     }
 
-    compareMedia(idMediaA, idMediaB, comparator) {
-        const pHashImageA = db.getImagePHash(idMediaA);
-        const pHashImageB = db.getImagePHash(idMediaB);
+    compareMedia(mediaA, mediaB, comparator) {
+        const binaryLowResHashA = Number(mediaA.lowResHash); // (mediaA.lowResHash >>> 0).toString(2);
+        const binaryLowResHashB = Number(mediaB.lowResHash); // (mediaB.lowResHash >>> 0).toString(2);
+
+        // Two lineart with faint lines and no color could be mistaken as "empty" since the lowResHash might be zero. But very dark images can be the opposite as in
+        // everything would be black. As such, everything 0 or 5.087291284850963e+235 must be compared
+        if (!(binaryLowResHashA <= 0 && binaryLowResHashB <= 0) || !(binaryLowResHashA == 5.087291284850963e+235 && binaryLowResHashB == 5.087291284850963e+235)) {
+            // Get the difference between the two hashes. If above 120% then it most likely isn't a duplicate, so let it be ignored.
+            let percDiff = Math.abs( (binaryLowResHashA - binaryLowResHashB) / ( (binaryLowResHashA + binaryLowResHashB) / 2 ) );
+            
+            // if (percDiff.toFixed(2) < 0.5) {
+            //     // console.log("Ignored with lowResHash diferrence of just " + percDiff.toFixed(2))
+            //     return percDiff.toFixed(2);
+            // }
+    
+            if (percDiff.toFixed(2) > 1.2) {
+                // console.log("Ignored with lowResHash diferrence too big to be relevant " + percDiff.toFixed(2))
+                return 0.0;
+            }
+        }
+
+        const pHashImageA = mediaA.pHash;
+        const pHashImageB = mediaB.pHash;
 
         let distance = 0;
         let bigger = 0;

@@ -6,6 +6,15 @@ const workerpool = require('workerpool');
 const MediaOperations = require("../db/media.operations");
 const db = new MediaOperations();
 
+// TODO: should this be configurable?
+const mediaTable = [
+    {
+        extensions: ["jpg", "jpeg", "png", "gif", "bmp", "svg"],
+        service: "images.service"
+    }
+]
+let service;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Start of worker
@@ -85,6 +94,18 @@ function processFilesChunk() {
 }
 
 function compareAlgorithm(comparator) {
+    // Get the appropiate service for the file type
+    // TODO: fix this later
+    let ServiceObject = require(`../services/images.service`);
+    // for (let i = 0; i < mediaTable.length; i++) {
+    //     const type = mediaTable[i];
+    //     if (type.extensions.includes(fileBeingCompared.extension)) { // At least for now all files in slice are the same type
+    //         ServiceObject = require(`../../services/${type.service}`);
+    //         break;
+    //     }
+    // }
+    service = new ServiceObject();
+    
     switch (comparator) {
         default:
         case "dynamic":
@@ -181,14 +202,13 @@ let buckets = [];
 
 function lshAlgorithm() {
     comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/lsh.comparator.js`), {
-        minWorkers: 1,
-        maxWorkers: 10
+        minWorkers: 10,
+        maxWorkers: 24
     });
-
-    db.clearTempVectorsTable();
 
     const prepare = require("./comparators/lsh/PrepareLSHDataset");
     buckets = prepare.getBuckets();
+    // buckets = [ buckets[0] ];
 
     let totalSize = 0;
 
@@ -203,35 +223,41 @@ function lshAlgorithm() {
 
 function processLshAlgorithmChunk() {
     const bucket = buckets.pop();
+    let bucketMedias = service.getMedias(bucket);
+    console.log(`Starting new bucket: ${bucketMedias.length} total medias in this bucket | ${buckets.length} buckets remaining`);
 
-    let comparedBucketIds = [];
+    let comparedBucketMedias = [];
 
-    while (bucket.length) {
-        const idFileBeingCompared = bucket.pop();
+    while (bucketMedias.length) {
+        const fileBeingCompared = bucketMedias.pop();
 
-        comparatorPool.exec('compare', [idFileBeingCompared, comparedBucketIds, differenceAlgorithm, threshold])
+        comparatorPool.exec('compare', [fileBeingCompared, comparedBucketMedias, differenceAlgorithm, threshold])
             .catch(err => {
                 console.error(err);
                 process.send({ event: "onException", data: err });
             })
             .then((dupesFound) => {
-                process.send({ event: "onFileCompared", data: idFileBeingCompared });
+                process.send({ event: "onFileCompared", data: fileBeingCompared.id });
                 db.insertMediasCompared(dupesFound)
             });
 
-        comparedBucketIds.push(idFileBeingCompared);
+            comparedBucketMedias.push(fileBeingCompared);
     }
 
     const workerChecker = setInterval(() => {
+        // console.log(`comparatorPool.stats.pendingTasks: ${comparatorPool.stats().pendingTasks} | buckets.length: ${buckets.length}`);
         if (comparatorPool.stats().pendingTasks <= 0) {
             comparatorPool.terminate(false).then(() => {
                 clearInterval(workerChecker);
+                db.consolidateComparisons();
 
                 if (buckets.length > 0) {
                     processLshAlgorithmChunk();
                 } else {
                     // await a little longer for all duplicates to be pushed
                     setTimeout(() => {
+                        // Just in case some medias get inserted on last executing insert on tempComparison
+                        db.consolidateComparisons();
                         console.log("Workerpool finished. Compare algorithm done.");
                         process.send({
                             event: "processFinished", data: db.getDuplicateMedias(differenceAlgorithm, threshold)
@@ -240,7 +266,7 @@ function processLshAlgorithmChunk() {
                 }
             });
         }
-    }, 1000);
+    }, 500);
 }
 ///////////////////////////// End LSH algorithm ////////////////////////////////
 

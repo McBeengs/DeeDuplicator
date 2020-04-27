@@ -39,17 +39,20 @@ export function initializeSQLite() {
     )`);
     comparisons.run();
 
+    const tempComparison = db.prepare(`
+    CREATE TABLE IF NOT EXISTS tempComparison (
+        a INTEGER NOT NULL,
+        b INTEGER NOT NULL,
+        leven NUMERIC NULL,
+        hamming NUMERIC NULL,
+        dice NUMERIC NULL,
+        whitelisted INTEGER NULL
+    )`);
+    tempComparison.run();
+
     const tempFiles = db.prepare(`
     CREATE TABLE IF NOT EXISTS tempFiles (
         path TEXT NOT NULL
-    )`);
-    tempFiles.run();
-
-    const tempFiles = db.prepare(`
-    CREATE TABLE IF NOT EXISTS tempVectors (
-        xAxis VARCHAR(100) NOT NULL,
-        yAxis VARCHAR(100) NOT NULL,
-        idMedia INTEGER NOT NULL,
     )`);
     tempFiles.run();
 

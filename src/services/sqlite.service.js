@@ -48,6 +48,24 @@ module.exports = class SQLiteService {
         }
     }
 
+    executeMultiple(sql) {
+        try {
+            db.exec(sql);
+        } catch (ex) {
+            if (ex.message.includes("database is locked")) {
+                // console.warn(`Database was locked while executing query [${sql}]. Trying again in a few moments`);
+                
+                if (parameters.length > 0) {
+                    return this.execute(sql, ...parameters);
+                } else {
+                    return this.execute(sql);
+                }
+            }
+
+            throw ex;
+        }
+    }
+
     close() {
         db.close();
     }
