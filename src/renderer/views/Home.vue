@@ -51,6 +51,11 @@ export default {
 
         startSearchProcess() {
             store.dispatch({
+                type: "setDuplicates",
+                duplicates: []
+            });
+
+            store.dispatch({
                 type: "setPreparedSearch",
                 preparedSearch: {
                     directories: [this.input],

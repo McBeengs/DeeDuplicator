@@ -201,7 +201,7 @@ function processBruteforceAlgorithmChunk() {
 let buckets = [];
 
 function lshAlgorithm() {
-    comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/lsh.comparator.js`), {
+    comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/lsh.direct.comparator.js`), {
         minWorkers: 10,
         maxWorkers: 24
     });
@@ -226,23 +226,39 @@ function processLshAlgorithmChunk() {
     let bucketMedias = service.getMedias(bucket);
     console.log(`Starting new bucket: ${bucketMedias.length} total medias in this bucket | ${buckets.length} buckets remaining`);
 
-    let comparedBucketMedias = [];
+    // let comparedBucketMedias = [];
+    let combinations = combineWithoutRepetitions(bucketMedias, 2);
+    bucketMedias = []; // free memory
 
-    while (bucketMedias.length) {
-        const fileBeingCompared = bucketMedias.pop();
+    while (combinations.length) {
+        const combinationChunk = combinations.splice(0, 10000);
 
-        comparatorPool.exec('compare', [fileBeingCompared, comparedBucketMedias, differenceAlgorithm, threshold])
+        comparatorPool.exec('compare', [combinationChunk, differenceAlgorithm, threshold])
             .catch(err => {
                 console.error(err);
                 process.send({ event: "onException", data: err });
             })
             .then((dupesFound) => {
-                process.send({ event: "onFileCompared", data: fileBeingCompared.id });
+                process.send({ event: "onFileCompared", data: 0 });
                 db.insertMediasCompared(dupesFound)
             });
-
-            comparedBucketMedias.push(fileBeingCompared);
     }
+
+    // while (bucketMedias.length) {
+    //     const fileBeingCompared = bucketMedias.pop();
+
+    //     comparatorPool.exec('compare', [fileBeingCompared, comparedBucketMedias, differenceAlgorithm, threshold])
+    //         .catch(err => {
+    //             console.error(err);
+    //             process.send({ event: "onException", data: err });
+    //         })
+    //         .then((dupesFound) => {
+    //             process.send({ event: "onFileCompared", data: fileBeingCompared.id });
+    //             db.insertMediasCompared(dupesFound)
+    //         });
+
+    //         comparedBucketMedias.push(fileBeingCompared);
+    // }
 
     const workerChecker = setInterval(() => {
         // console.log(`comparatorPool.stats.pendingTasks: ${comparatorPool.stats().pendingTasks} | buckets.length: ${buckets.length}`);
@@ -300,4 +316,32 @@ async function getAllFilesRecursively(base, ext = ['*'], files) {
         process.send({ event: "onException", data: { message: "Error while getting all files recursively", exception: ex } });
         return false;
     }
+}
+
+function combineWithoutRepetitions(comboOptions, comboLength) {
+    // If the length of the combination is 1 then each element of the original array
+    // is a combination itself.
+    if (comboLength === 1) {
+        return comboOptions.map(comboOption => [comboOption]);
+    }
+  
+    // Init combinations array.
+    const combos = [];
+  
+    // Extract characters one by one and concatenate them to combinations of smaller lengths.
+    // We need to extract them because we don't want to have repetitions after concatenation.
+    comboOptions.forEach((currentOption, optionIndex) => {
+        // Generate combinations of smaller size.
+        const smallerCombos = combineWithoutRepetitions(
+            comboOptions.slice(optionIndex + 1),
+            comboLength - 1,
+        );
+
+        // Concatenate currentOption with all combinations of smaller size.
+        smallerCombos.forEach((smallerCombo) => {
+            combos.push([currentOption].concat(smallerCombo));
+        });
+    });
+  
+    return combos;
 }

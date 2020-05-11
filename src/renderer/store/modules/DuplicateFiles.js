@@ -12,6 +12,7 @@ const DuplicateFiles = {
     },
     mutations: {
         setDuplicates(state, duplicates) {
+            state.duplicates = [];
             state.duplicates = duplicates;
         }
     },
