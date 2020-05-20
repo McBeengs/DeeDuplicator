@@ -127,27 +127,28 @@ module.exports = class ImagesService {
 
                 Jimp.read(media.path).then((image) => {
                     try {
-                        const size = 28;
+                        const size = 64;
                         image
                             .resize(size, size)
                             .grayscale().contrast(1); // make pure black and white pixels, no gray
                         
 
-                        let pixels = '';
+                        let pixels = 0;
                         for (let y = 0; y < size; y++) {
                             for (let x = 0; x < size; x++) {
-                                pixels += image.getPixelColor(x, y) === 255 ? '1' : '0'
+                                if (image.getPixelColor(x, y) === 255) {
+                                    pixels++;
+                                }
                             }
                         }
-                        const bigInteger = parseInt(pixels, 2);
-
+                        
                         // image.writeAsync(media.path.substring(0, media.path.lastIndexOf("\\")) + `\\test-${Math.random() * 1000 }.jpg`).then(() => {
                         //     db.insertImage({ idMedia: media.id, lowResHash: bigInteger, pHash: data }).then(idInserted => {
                         //         resolve(true);
                         //     });
                         // });
 
-                        db.insertImage({ idMedia: media.id, lowResHash: bigInteger, pHash: data }).then(idInserted => {
+                        db.insertImage({ idMedia: media.id, lowResHash: pixels, pHash: data }).then(idInserted => {
                             resolve(true);
                         });
                     } catch (err) {
@@ -167,25 +168,53 @@ module.exports = class ImagesService {
     }
 
     compareMedia(mediaA, mediaB, comparator) {
-        const binaryLowResHashA = Number(mediaA.lowResHash); // (mediaA.lowResHash >>> 0).toString(2);
-        const binaryLowResHashB = Number(mediaB.lowResHash); // (mediaB.lowResHash >>> 0).toString(2);
+        // const binaryLowResHashA = Number(mediaA.lowResHash); // (mediaA.lowResHash >>> 0).toString(2);
+        // const binaryLowResHashB = Number(mediaB.lowResHash); // (mediaB.lowResHash >>> 0).toString(2);
 
-        // Two lineart with faint lines and no color could be mistaken as "empty" since the lowResHash might be zero. But very dark images can be the opposite as in
-        // everything would be black. As such, everything 0 or 5.087291284850963e+235 must be compared
-        if (!(binaryLowResHashA <= 0 && binaryLowResHashB <= 0) || !(binaryLowResHashA == 5.087291284850963e+235 && binaryLowResHashB == 5.087291284850963e+235)) {
-            // Get the difference between the two hashes. If above 120% then it most likely isn't a duplicate, so let it be ignored.
-            let percDiff = Math.abs( (binaryLowResHashA - binaryLowResHashB) / ( (binaryLowResHashA + binaryLowResHashB) / 2 ) );
+        // // Two lineart with faint lines and no color could be mistaken as "empty" since the lowResHash might be zero. But very dark images can be the opposite as in
+        // // everything would be black. As such, everything 0 or 4096 must be compared
+        // let percDiff = 0;
+        // if ((binaryLowResHashA > 0 && binaryLowResHashB > 0) && (binaryLowResHashA < 4096 && binaryLowResHashB < 4096)) {
+        //     // Get the difference between the two hashes. If above 100% then it most likely isn't a duplicate, so let it be ignored.
+        //     percDiff = Math.abs((binaryLowResHashA - binaryLowResHashB) / ( (binaryLowResHashA + binaryLowResHashB) / 2 ));
             
-            // if (percDiff.toFixed(2) < 0.5) {
-            //     // console.log("Ignored with lowResHash diferrence of just " + percDiff.toFixed(2))
-            //     return percDiff.toFixed(2);
-            // }
-    
-            if (percDiff.toFixed(2) > 1.2) {
-                // console.log("Ignored with lowResHash diferrence too big to be relevant " + percDiff.toFixed(2))
-                return 0.0;
-            }
-        }
+        //     if (percDiff > 1) {
+        //         // console.log("Ignored with lowResHash diferrence too big to be relevant " + percDiff.toFixed(2))
+        //         return 0.0;
+        //     }
+        // }
+
+        // let sizeOfComparison = 64;
+
+        // let firstCharsMediaA = mediaA.pHash.substring(0, sizeOfComparison);
+        // let firstCharsMediaB = mediaB.pHash.substring(0, sizeOfComparison);
+        // let difference = false;
+
+        // for (let i = 0; i < firstCharsMediaA.length; i++) {
+        //     if (firstCharsMediaA[i] !== firstCharsMediaB[i]) {
+        //         difference = true;
+        //         break;
+        //     }
+        // }
+
+        // if (difference) {
+        //     return 0.0;
+        // }
+
+        // let lastCharsMediaA = mediaA.pHash.substring(mediaA.length / 2 - sizeOfComparison, sizeOfComparison);
+        // let lastCharsMediaB = mediaB.pHash.substring(mediaB.length / 2 - sizeOfComparison, sizeOfComparison);
+        // difference = false;
+
+        // for (let i = 0; i < lastCharsMediaA.length; i++) {
+        //     if (lastCharsMediaA[i] !== lastCharsMediaB[i]) {
+        //         difference = true;
+        //         break;
+        //     }
+        // }
+
+        // if (difference) {
+        //     return 0.0;
+        // }
 
         const pHashImageA = mediaA.pHash;
         const pHashImageB = mediaB.pHash;
@@ -213,6 +242,7 @@ module.exports = class ImagesService {
         }
 
         // Example from imghash npm demo
+        // console.log(`${percDiff} | ${distance.toFixed(2)}`);
         return distance.toFixed(2);
     }
 }

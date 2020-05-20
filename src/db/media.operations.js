@@ -214,7 +214,7 @@ module.exports = class MediaOperations {
             // LEFT JOIN comparison c ON c.a = t.a AND c.b = t.b
             // WHERE c.a IS NULL;
             // `);
-            
+
             db.execute("INSERT INTO tempComparison (a, b, leven, hamming, dice) VALUES " + stringsToInsert);
             
             return true;

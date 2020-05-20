@@ -5,7 +5,8 @@
                 <div class="card">
                     <div class="card-body">
                         <input type="text" class="form-control" v-model="input">
-                        <button v-on:click="selectDirectory()">click me!</button>
+                        <button @click="selectDirectory()">click me!</button>
+                        <button @click="clearCache()">Clear Cache</button>
                     </div>
                 </div>
             </div>
@@ -47,6 +48,18 @@ export default {
             } else {
                 this.startSearchProcess();
             }
+        },
+
+        clearCache() {
+            store.dispatch({
+                type: "setDuplicates",
+                duplicates: []
+            });
+
+            store.dispatch({
+                type: "setTrash",
+                trash: []
+            });
         },
 
         startSearchProcess() {

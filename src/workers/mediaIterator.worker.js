@@ -21,7 +21,7 @@ let service;
 const rootPath = process.argv[2];
 const extensions = process.argv[3];
 
-const comparator = "lsh";
+const comparator = "bruteforce";
 const differenceAlgorithm = "hamming";
 const threshold = 0.85;
 
@@ -177,12 +177,14 @@ function processBruteforceAlgorithmChunk() {
         if (comparatorPool.stats().pendingTasks <= 0) {
             comparatorPool.terminate(false).then(() => {
                 clearInterval(workerChecker);
+                db.consolidateComparisons();
 
                 if (mediaToCompare.length > 0) {
                     processBruteforceAlgorithmChunk();
                 } else {
                     // await a little longer for all duplicates to be pushed
                     setTimeout(() => {
+                        db.consolidateComparisons();
                         console.log("Workerpool finished. Compare algorithm done.");
                         process.send({
                             event: "processFinished", data: db.getDuplicateMedias(differenceAlgorithm, threshold)
