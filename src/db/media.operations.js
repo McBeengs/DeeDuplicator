@@ -98,24 +98,6 @@ module.exports = class MediaOperations {
         }
     }
 
-    getAllAlreadyComparedIds() {
-        const idsMedias = db.query(`
-        SELECT DISTINCT a FROM (
-            SELECT DISTINCT a FROM comparison
-            UNION ALL
-            SELECT DISTINCT b FROM comparison
-        )
-        `);
-
-        let ids = [];
-
-        for (let i = 0; i < idsMedias.length; i++) {
-            ids.push(idsMedias[i].a);
-        }
-
-        return ids;
-    }
-
     getNonComparedMedias() {
         let values = "";
         let separator = "";

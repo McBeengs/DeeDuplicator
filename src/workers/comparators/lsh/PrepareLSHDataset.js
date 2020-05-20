@@ -5,7 +5,6 @@ const PrepareLSHDataset = {
     getBuckets() {
         try {
             let mediaToCompare = db.getNonComparedMedias();
-            let comparedIds = db.getAllAlreadyComparedIds();
 
             const LSHMinHash = require("./LSHMinHash");
 
@@ -22,7 +21,7 @@ const PrepareLSHDataset = {
 
             const service = new ServiceObject();
 
-            let totalSize = (mediaToCompare.length + comparedIds.length);
+            let totalSize = mediaToCompare.length;
             let stages = 2;
             let size = totalSize;
             let buckets = totalSize / 2000;

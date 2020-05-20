@@ -21,7 +21,7 @@ let service;
 const rootPath = process.argv[2];
 const extensions = process.argv[3];
 
-const comparator = "bruteforce";
+const comparator = "lsh";
 const differenceAlgorithm = "hamming";
 const threshold = 0.85;
 
@@ -131,7 +131,6 @@ function dynamicAlgorithm() {
     });
 
     mediaToCompare = db.getNonComparedMedias();
-    comparedIds = db.getAllAlreadyComparedIds();
     process.send({ event: "filesToCompare", data: mediaToCompare.length });
 }
 
@@ -146,7 +145,6 @@ function bruteforceAlgorithm() {
     });
 
     mediaToCompare = db.getNonComparedMedias();
-    comparedIds = db.getAllAlreadyComparedIds();
     process.send({ event: "filesToCompare", data: mediaToCompare.length });
 
     processBruteforceAlgorithmChunk();
@@ -233,7 +231,7 @@ function processLshAlgorithmChunk() {
     bucketMedias = []; // free memory
 
     while (combinations.length) {
-        const combinationChunk = combinations.splice(0, 10000);
+        const combinationChunk = combinations.splice(0, 1000);
 
         comparatorPool.exec('compare', [combinationChunk, differenceAlgorithm, threshold])
             .catch(err => {
@@ -241,8 +239,20 @@ function processLshAlgorithmChunk() {
                 process.send({ event: "onException", data: err });
             })
             .then((dupesFound) => {
-                process.send({ event: "onFileCompared", data: 0 });
-                db.insertMediasCompared(dupesFound)
+                db.insertMediasCompared(dupesFound);
+
+                for (let i = 0; i < combinationChunk.length; i++) {
+                    let combination = combinationChunk[i];
+                    if (comparedIds.includes(combination[0].id) <= 0) {
+                        comparedIds.push(combination[0].id);
+                        process.send({ event: "onFileCompared", data: combination[0].id });
+                    }
+
+                    if (comparedIds.includes(combination[1].id) <= 0) {
+                        comparedIds.push(combination[1].id);
+                        process.send({ event: "onFileCompared", data: combination[1].id });
+                    }
+                }
             });
     }
 

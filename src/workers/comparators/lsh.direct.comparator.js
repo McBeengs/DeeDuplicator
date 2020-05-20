@@ -17,7 +17,7 @@ const mediaTable = [
 let dupesFound = [];
 
 define(['workerpool/dist/workerpool'], function (workerpool) {
-    async function compare(combinationChunk, differenceAlgorithm, threshold) {
+    function compare(combinationChunk, differenceAlgorithm, threshold) {
         // Get the appropiate service for the file type
         // TODO: fix this later
         let ServiceObject = require(`../../services/images.service`);
@@ -31,7 +31,41 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
 
         const service = new ServiceObject();
 
-        await async.each(combinationChunk, async (combination) => {
+        // await async.each(combinationChunk, async (combination) => {
+        //     let fileBeingCompared = combination[0];
+        //     let fileToCompare = combination[1];
+
+        //     // if (fileBeingCompared.size === fileToCompare.size) {
+        //     //     if (fileBeingCompared.extension === fileToCompare.extension) {
+        //     //         const dupe = { 
+        //     //             idMediaA: fileBeingCompared.id, 
+        //     //             idMediaB: fileToCompare.id,
+        //     //             algorithm: "sameSizeAndExtension",
+        //     //             percentage: 1.0
+        //     //         };
+        //     //         dupesFound.push(dupe);
+        //     //         // console.log("Dupe found", dupe);
+        //     //     }
+        //     // }
+
+        //     const distance = service.compareMedia(fileBeingCompared, fileToCompare, differenceAlgorithm);
+        //     if (distance >= threshold) {
+        //         const dupe = { 
+        //             idMediaA: fileBeingCompared.id, 
+        //             idMediaB: fileToCompare.id,
+        //             algorithm: differenceAlgorithm,
+        //             percentage: distance
+        //         };
+        //         dupesFound.push(dupe);
+        //         console.log(`dupe found: ${distance}`);
+        //     }
+        // }, () => {
+        //     return true;
+        // });
+
+        for (let i = 0; i < combinationChunk.length; i++) {
+            let combination = combinationChunk[i];
+
             let fileBeingCompared = combination[0];
             let fileToCompare = combination[1];
 
@@ -57,10 +91,9 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
                     percentage: distance
                 };
                 dupesFound.push(dupe);
+                console.log(`dupe found: ${distance}`);
             }
-        }, () => {
-            return true;
-        });
+        }
 
         return dupesFound;
     }
