@@ -167,22 +167,28 @@ module.exports = class ImagesService {
         return db.getVectors(medias);
     }
 
-    compareMedia(mediaA, mediaB, comparator) {
+    getRelativeDistance(mediaA, mediaB) {
         const binaryLowResHashA = Number(mediaA.lowResHash); // (mediaA.lowResHash >>> 0).toString(2);
         const binaryLowResHashB = Number(mediaB.lowResHash); // (mediaB.lowResHash >>> 0).toString(2);
+        return Math.abs((binaryLowResHashA - binaryLowResHashB) / ( (binaryLowResHashA + binaryLowResHashB) / 2 ));
+    }
 
-        // Two lineart with faint lines and no color could be mistaken as "empty" since the lowResHash might be zero. But very dark images can be the opposite as in
-        // everything would be black. As such, everything 0 or 4096 must be compared
-        let percDiff = 0;
-        if ((binaryLowResHashA > 0 && binaryLowResHashB > 0) && (binaryLowResHashA < 4096 && binaryLowResHashB < 4096)) {
-            // Get the difference between the two hashes. If above 100% then it most likely isn't a duplicate, so let it be ignored.
-            percDiff = Math.abs((binaryLowResHashA - binaryLowResHashB) / ( (binaryLowResHashA + binaryLowResHashB) / 2 ));
+    compareMedia(mediaA, mediaB, comparator) {
+        // const binaryLowResHashA = Number(mediaA.lowResHash); // (mediaA.lowResHash >>> 0).toString(2);
+        // const binaryLowResHashB = Number(mediaB.lowResHash); // (mediaB.lowResHash >>> 0).toString(2);
+
+        // // Two lineart with faint lines and no color could be mistaken as "empty" since the lowResHash might be zero. But very dark images can be the opposite as in
+        // // everything would be black. As such, everything 0 or 4096 must be compared
+        // let percDiff = 0;
+        // if ((binaryLowResHashA > 0 && binaryLowResHashB > 0) && (binaryLowResHashA < 4096 && binaryLowResHashB < 4096)) {
+        //     // Get the difference between the two hashes. If above 100% then it most likely isn't a duplicate, so let it be ignored.
+        //     percDiff = Math.abs((binaryLowResHashA - binaryLowResHashB) / ( (binaryLowResHashA + binaryLowResHashB) / 2 ));
             
-            if (percDiff > 1) {
-                // console.log("Ignored with lowResHash diferrence too big to be relevant " + percDiff.toFixed(2))
-                return 0.0;
-            }
-        }
+        //     if (percDiff > 1) {
+        //         // console.log("Ignored with lowResHash diferrence too big to be relevant " + percDiff.toFixed(2))
+        //         return 0.0;
+        //     }
+        // }
 
         let sizeOfComparison = 64;
 

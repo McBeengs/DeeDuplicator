@@ -2,24 +2,11 @@ const MediaOperations = require("../../../db/media.operations");
 const db = new MediaOperations();
 
 const PrepareLSHDataset = {
-    getBuckets() {
+    getBuckets(idsMediasProcessed, service) {
         try {
-            let mediaToCompare = db.getNonComparedMedias();
+            let mediaToCompare = db.getNonComparedMedias(idsMediasProcessed);
 
             const LSHMinHash = require("./LSHMinHash");
-
-            // Get the appropiate service for the file type
-            // TODO: fix this later
-            let ServiceObject = require(`../../../services/images.service`);
-            // for (let i = 0; i < mediaTable.length; i++) {
-            //     const type = mediaTable[i];
-            //     if (type.extensions.includes(fileBeingCompared.extension)) { // At least for now all files in slice are the same type
-            //         ServiceObject = require(`../../services/${type.service}`);
-            //         break;
-            //     }
-            // }
-
-            const service = new ServiceObject();
 
             let totalSize = mediaToCompare.length;
             let stages = 2;

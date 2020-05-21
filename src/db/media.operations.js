@@ -98,23 +98,23 @@ module.exports = class MediaOperations {
         }
     }
 
-    getNonComparedMedias() {
+    getNonComparedMedias(idsToConsider) {
         let values = "";
         let separator = "";
 
-        const idsMedias = db.query(`
-        SELECT DISTINCT a FROM (
-            SELECT DISTINCT a FROM comparison
-            UNION ALL
-            SELECT DISTINCT b FROM comparison
-        )
-        `);
+        // const idsMedias = db.query(`
+        // SELECT DISTINCT a FROM (
+        //     SELECT DISTINCT a FROM comparison
+        //     UNION ALL
+        //     SELECT DISTINCT b FROM comparison
+        // )
+        // `);
 
-        if (idsMedias.length <= 0) {
+        if (idsToConsider.length <= 0) {
             values = "";
         } else {
-            for (let i = 0; i < idsMedias.length; i++) {
-                values += separator + `(${idsMedias[i].a})`;
+            for (let i = 0; i < idsToConsider.length; i++) {
+                values += separator + `(${idsToConsider[i]})`;
                 separator = ","
             }
 
@@ -145,7 +145,7 @@ module.exports = class MediaOperations {
 
     insertMediasCompared(comparisons) {
         try {
-            if (comparisons.length <= 0) {
+            if (!comparisons || comparisons.length <= 0) {
                 return true;
             }
 

@@ -54,6 +54,8 @@ entryPoint();
 
 let mediaToCompare = [];
 
+let idsMediasProcessed = [];
+
 function processFilesChunk() {
     const chunk = db.getChunkTempFiles();
 
@@ -67,6 +69,7 @@ function processFilesChunk() {
                 process.send({ event: "onFileProcessed", data: 0 });
             })
             .then((result, error) => {
+                idsMediasProcessed.push(result.id);
                 process.send({ event: "onFileProcessed", data: result.id });
             });
     }
@@ -130,7 +133,7 @@ function dynamicAlgorithm() {
         maxWorkers: 10
     });
 
-    mediaToCompare = db.getNonComparedMedias();
+    mediaToCompare = db.getNonComparedMedias(idsMediasProcessed);
     process.send({ event: "filesToCompare", data: mediaToCompare.length });
 }
 
@@ -144,7 +147,7 @@ function bruteforceAlgorithm() {
         maxWorkers: 10
     });
 
-    mediaToCompare = db.getNonComparedMedias();
+    mediaToCompare = db.getNonComparedMedias(idsMediasProcessed);
     process.send({ event: "filesToCompare", data: mediaToCompare.length });
 
     processBruteforceAlgorithmChunk();
@@ -206,8 +209,10 @@ function lshAlgorithm() {
         maxWorkers: 24
     });
 
+    console.log(idsMediasProcessed);
+
     const prepare = require("./comparators/lsh/PrepareLSHDataset");
-    buckets = prepare.getBuckets();
+    buckets = prepare.getBuckets(idsMediasProcessed, service);
     // buckets = [ buckets[0] ];
 
     let totalSize = 0;
@@ -224,14 +229,22 @@ function lshAlgorithm() {
 function processLshAlgorithmChunk() {
     const bucket = buckets.pop();
     let bucketMedias = service.getMedias(bucket);
-    console.log(`Starting new bucket: ${bucketMedias.length} total medias in this bucket | ${buckets.length} buckets remaining`);
 
     // let comparedBucketMedias = [];
     let combinations = combineWithoutRepetitions(bucketMedias, 2);
+    let numBucketMedias = bucketMedias.length;
     bucketMedias = []; // free memory
 
+    console.log(`${combinations.length} before filtering`);
+    // filter the combinations so that only relevant similar pairs are fed to the workers. By similar it's assumed a relative distance of < 0.3 of each file type
+    // equivalent of the implementation of "getRelativeDistance"
+    combinations = combinations.filter(c => {
+        return service.getRelativeDistance(c[0], c[1]) < 0.3;
+    });
+    console.log(`Starting new bucket: ${numBucketMedias} total medias in this bucket | ${buckets.length} buckets remaining | ${combinations.length} total combinations to process`);
+
     while (combinations.length) {
-        const combinationChunk = combinations.splice(0, 1000);
+        const combinationChunk = combinations.splice(0, 10000);
 
         comparatorPool.exec('compare', [combinationChunk, differenceAlgorithm, threshold])
             .catch(err => {
