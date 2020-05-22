@@ -46,7 +46,7 @@ export default {
         EachGroupLayout
     },
     created() {
-        this.duplicateGroups = store.getters.getDuplicates;
+        this.getDuplicatesFromDb();
     },
     mounted() {
         window.addEventListener('unload', () => {
@@ -68,7 +68,16 @@ export default {
         }
     },
     methods: {
+        getDuplicatesFromDb() {
+            let dbDuplicates = db.getDuplicates();
+            this.duplicateGroups = this.$store.getters.getDuplicates;
+
+            if (this.duplicateGroups.length !== dbDuplicates.length) {
+                this.duplicateGroups = dbDuplicates;
+            }
+        },
         onItemMenuClick(event, item) {
+            this.getDuplicatesFromDb();
             switch (item.id) {
                 case "ignore":
                 default:

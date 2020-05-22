@@ -41,7 +41,8 @@ define(['workerpool/dist/workerpool'], function(workerpool) {
         const service = new ServiceObject();
         const result = await service.processMedia(media);
         if (!result) { // Something went wrong and no media was persisted
-            await db.deleteFailedMedia(media.path);
+            // await db.deleteFailedMedia(media.path);
+            db.insertMediaException(file);
             return null;
         }
 

@@ -27,7 +27,6 @@
 </template>
 
 <script>
-import store from '../../store/index'
 import RadialProgressBar from './RadialProgressBar';
 import StepProgress from 'vue-step-progress';
 import 'vue-step-progress/dist/main.css';
@@ -88,7 +87,7 @@ export default {
     },
     methods: {
         iterate() {
-            const preparedSearch = store.getters.getPreparedSearch.preparedSearch;
+            const preparedSearch = this.$store.getters.getPreparedSearch.preparedSearch;
 
             // Start cron
             this.totalTimer = setInterval(this.clockRunning, 1000);
@@ -141,24 +140,19 @@ export default {
                             this.message = "Finishing the algorithm...";
                         }
                     },
-                    processFinished: (allDupes) => {
+                    processFinished: () => {
                         clearInterval(this.totalTimer);
                         clearInterval(this.stepTimer);
                         this.processFinished = true;
                         this.message = "All done. Redirecting to the selection screen";
                         this.currentStep = 3;
 
-                        store.dispatch({
-                            type: "setDuplicates",
-                            duplicates: allDupes
-                        });
-
                         setTimeout(() => {
                             ipcMain.emit("closeWindow", { 
                                 name: "comparator",
                                 redirectTo: "compare"
                             });
-                        }, 3000);
+                        }, 5000);
                     }
                 },
                 callback: (pid) => {

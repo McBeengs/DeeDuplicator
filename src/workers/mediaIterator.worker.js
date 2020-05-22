@@ -24,6 +24,7 @@ const extensions = process.argv[3];
 const comparator = "lsh";
 const differenceAlgorithm = "hamming";
 const threshold = 0.85;
+const skipWhenNoNewFiles = false;
 
 const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.worker.js"), {
     minWorkers: 1,
@@ -37,9 +38,23 @@ function entryPoint() {
         db.clearTempFilesTable();
 
         getAllFilesRecursively(rootPath, extensions).then((success) => {
-            if (db.removeProcessedFiles()) {
-                process.send({ event: "filesFounded", data: db.getTempFilesTableSize() });
 
+            idsMediasProcessed = db.getIdsMediasAlreadyProcessed();
+
+            if (db.removeProcessedFiles()) {
+                const tempFilesSize = db.getTempFilesTableSize();
+
+                // If no new file was founded, we can assume that everything has already been compared
+                if (tempFilesSize <= 0 && skipWhenNoNewFiles) {
+                    console.log("No new files were founded on the path informed and its subdirectories. Skipping comparison.");
+                    const allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, idsMediasProcessed);
+                    process.send({
+                        event: "processFinished", data: allDupes
+                    });
+                    return;
+                }
+
+                process.send({ event: "filesFounded", data: tempFilesSize });
                 processFilesChunk();
             }
         });
@@ -69,8 +84,16 @@ function processFilesChunk() {
                 process.send({ event: "onFileProcessed", data: 0 });
             })
             .then((result, error) => {
-                idsMediasProcessed.push(result.id);
-                process.send({ event: "onFileProcessed", data: result.id });
+                try {
+                    if (result) {
+                        process.send({ event: "onFileProcessed", data: result.id });
+                        idsMediasProcessed.push(result.id);
+                    } else {
+                        process.send({ event: "onFileProcessed", data: 0 });
+                    }
+                } catch (ex) {
+                    process.send({ event: "onFileProcessed", data: 0 });
+                }
             });
     }
 
@@ -147,7 +170,9 @@ function bruteforceAlgorithm() {
         maxWorkers: 10
     });
 
-    mediaToCompare = db.getNonComparedMedias(idsMediasProcessed);
+    // mediaToCompare = db.getNonComparedMedias(idsMediasProcessed);
+    mediaToCompare = [];
+    mediaToCompare.push(... idsMediasProcessed);
     process.send({ event: "filesToCompare", data: mediaToCompare.length });
 
     processBruteforceAlgorithmChunk();
@@ -159,7 +184,8 @@ function processBruteforceAlgorithmChunk() {
     let tempArray = mediaToCompare.splice(0, 1000);
 
     while (tempArray.length) {
-        const idFileBeingCompared = tempArray.pop().id;
+        // const idFileBeingCompared = tempArray.pop().id;
+        const idFileBeingCompared = tempArray.pop();
 
         comparatorPool.exec('compare', [idFileBeingCompared, comparedIds, differenceAlgorithm, threshold])
             .catch(err => {
@@ -176,8 +202,9 @@ function processBruteforceAlgorithmChunk() {
 
     const workerChecker = setInterval(() => {
         if (comparatorPool.stats().pendingTasks <= 0) {
+            clearInterval(workerChecker);
+            
             comparatorPool.terminate(false).then(() => {
-                clearInterval(workerChecker);
                 db.consolidateComparisons();
 
                 if (mediaToCompare.length > 0) {
@@ -187,8 +214,10 @@ function processBruteforceAlgorithmChunk() {
                     setTimeout(() => {
                         db.consolidateComparisons();
                         console.log("Workerpool finished. Compare algorithm done.");
+                        const allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, idsMediasProcessed);
+                        db.insertAllDuplicatesFound(allDupes);
                         process.send({
-                            event: "processFinished", data: db.getDuplicateMedias(differenceAlgorithm, threshold)
+                            event: "processFinished", data: null
                         });
                     }, 5000);
                 }
@@ -204,12 +233,10 @@ function processBruteforceAlgorithmChunk() {
 let buckets = [];
 
 function lshAlgorithm() {
-    comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/lsh.direct.comparator.js`), {
+    comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/lsh.comparator.js`), {
         minWorkers: 10,
         maxWorkers: 24
     });
-
-    console.log(idsMediasProcessed);
 
     const prepare = require("./comparators/lsh/PrepareLSHDataset");
     buckets = prepare.getBuckets(idsMediasProcessed, service);
@@ -288,24 +315,30 @@ function processLshAlgorithmChunk() {
     const workerChecker = setInterval(() => {
         // console.log(`comparatorPool.stats.pendingTasks: ${comparatorPool.stats().pendingTasks} | buckets.length: ${buckets.length}`);
         if (comparatorPool.stats().pendingTasks <= 0) {
-            comparatorPool.terminate(false).then(() => {
-                clearInterval(workerChecker);
-                db.consolidateComparisons();
-
-                if (buckets.length > 0) {
-                    processLshAlgorithmChunk();
-                } else {
-                    // await a little longer for all duplicates to be pushed
-                    setTimeout(() => {
-                        // Just in case some medias get inserted on last executing insert on tempComparison
-                        db.consolidateComparisons();
-                        console.log("Workerpool finished. Compare algorithm done.");
-                        process.send({
-                            event: "processFinished", data: db.getDuplicateMedias(differenceAlgorithm, threshold)
-                        });
-                    }, 5000);
-                }
-            });
+            clearInterval(workerChecker);
+            // If the LSH algorithm terminates way too fast (prob. few files / buckets), we can prematurely terminate the workerpool,
+            // generating an exception
+            setTimeout(() => {
+                comparatorPool.terminate(false).then(() => {
+                    db.consolidateComparisons();
+    
+                    if (buckets.length > 0) {
+                        processLshAlgorithmChunk();
+                    } else {
+                        // await a little longer for all duplicates to be pushed
+                        setTimeout(() => {
+                            // Just in case some medias get inserted on last executing insert on tempComparison
+                            db.consolidateComparisons();
+                            console.log("Workerpool finished. Compare algorithm done.");
+                            const allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, idsMediasProcessed);
+                            db.insertAllDuplicatesFound(allDupes);
+                            process.send({
+                                event: "processFinished", data: null
+                            });
+                        }, 5000);
+                    }
+                });
+            }, 1000);
         }
     }, 500);
 }
@@ -355,18 +388,20 @@ function combineWithoutRepetitions(comboOptions, comboLength) {
   
     // Extract characters one by one and concatenate them to combinations of smaller lengths.
     // We need to extract them because we don't want to have repetitions after concatenation.
-    comboOptions.forEach((currentOption, optionIndex) => {
-        // Generate combinations of smaller size.
-        const smallerCombos = combineWithoutRepetitions(
-            comboOptions.slice(optionIndex + 1),
-            comboLength - 1,
-        );
-
-        // Concatenate currentOption with all combinations of smaller size.
-        smallerCombos.forEach((smallerCombo) => {
-            combos.push([currentOption].concat(smallerCombo));
+    if (comboOptions) {
+        comboOptions.forEach((currentOption, optionIndex) => {
+            // Generate combinations of smaller size.
+            const smallerCombos = combineWithoutRepetitions(
+                comboOptions.slice(optionIndex + 1),
+                comboLength - 1,
+            );
+    
+            // Concatenate currentOption with all combinations of smaller size.
+            smallerCombos.forEach((smallerCombo) => {
+                combos.push([currentOption].concat(smallerCombo));
+            });
         });
-    });
+    }
   
     return combos;
 }

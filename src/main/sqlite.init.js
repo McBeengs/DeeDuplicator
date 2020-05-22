@@ -65,5 +65,24 @@ export function initializeSQLite() {
     )`);
     image.run();
 
+    const mediaException = db.prepare(`
+    CREATE TABLE IF NOT EXISTS mediaException (
+        path TEXT NOT NULL
+    )`);
+    mediaException.run();
+
+    const tempDuplicates = db.prepare(`
+    CREATE TABLE IF NOT EXISTS tempDuplicates (
+        'group' INTEGER NOT NULL,
+        id INTEGER NOT NULL,
+        fileName VARCHAR(300) NOT NULL,
+        extension VARCHAR(20) NOT NULL,
+        createDate VARCHAR(35) NOT NULL,
+        size NUMERIC NOT NULL,
+        --md5 VARCHAR(32) NOT NULL,
+        path TEXT NOT NULL
+    )`);
+    tempDuplicates.run();
+
     db.close();
   }

@@ -42,6 +42,13 @@ module.exports = class MediaOperations {
         });
     }
 
+    insertMediaException(path) {
+        db.execute(`
+        INSERT INTO mediaException (path)
+        SELECT ? WHERE NOT EXISTS (SELECT 1 FROM mediaException WHERE path = ?);
+        `, path, path);
+    }
+
     deleteFailedMedia(filePath) {
         return new Promise((resolve) => {
             const result = db.execute(`DELETE FROM media WHERE path = ?`, filePath);
@@ -56,6 +63,25 @@ module.exports = class MediaOperations {
             return true;
         } catch (ex) {
             return false;
+        }
+    }
+
+    getIdsMediasAlreadyProcessed() {
+        try {
+            const result = db.query("SELECT id FROM media WHERE path IN (SELECT path FROM tempFiles)");
+            if (!result.length || result.length <= 0) {
+                return [];
+            } else {
+                let ids = [];
+
+                for (let i = 0; i < result.length; i++) {
+                    ids.push(result[i].id);
+                }
+
+                return ids;
+            }
+        } catch (ex) {
+            return [];
         }
     }
 
@@ -121,7 +147,7 @@ module.exports = class MediaOperations {
             values = "VALUES " + values;
         }
 
-        let query = `SELECT id FROM media WHERE id NOT IN (${values})`;
+        let query = `SELECT id FROM media WHERE id IN (${values})`;
 
         const result = db.query(query);
 
@@ -221,9 +247,29 @@ module.exports = class MediaOperations {
         }
     }
 
-    getDuplicateMedias(algorithm, threshold) {
+    getDuplicateMedias(algorithm, threshold, idsToConsider) {
         try {
-            let query = `SELECT a, b FROM comparison WHERE ${algorithm} >= ? AND whitelisted IS null ORDER BY a ASC`;
+            let values = "";
+            let separator = "";
+
+            // const idsMedias = db.query(`
+            // SELECT DISTINCT a FROM (
+            //     SELECT DISTINCT a FROM comparison
+            //     UNION ALL
+            //     SELECT DISTINCT b FROM comparison
+            // )
+            // `);
+
+            if (!idsToConsider || idsToConsider.length <= 0) {
+                values = "";
+            } else {
+                for (let i = 0; i < idsToConsider.length; i++) {
+                    values += separator + `${idsToConsider[i]}`;
+                    separator = ","
+                }
+            }
+
+            let query = `SELECT a, b FROM comparison WHERE ${algorithm} >= ? AND whitelisted IS null AND a IN (${values}) AND b IN (${values}) ORDER BY a ASC`;
             let result = db.query(query, threshold);
 
             if (!result.length || result.length <= 0) {
@@ -274,6 +320,38 @@ module.exports = class MediaOperations {
             }
         } catch (ex) {
             return [];
+        }
+    }
+
+    insertAllDuplicatesFound(allDupes) {
+        try {
+            let values = "";
+            let separator = "";
+
+            db.execute("DELETE FROM tempDuplicates");
+
+            let group = 1;
+            if (!allDupes || allDupes.length <= 0) {
+                values = "";
+            } else {
+                for (let i = 0; i < allDupes.length; i++) {
+                    for (let j = 0; j < allDupes[i].length; j++) {
+                        let media = allDupes[i][j];
+                        values += separator + `(${group}, ${media.id}, '${media.fileName.replace(/'/g, "''")}', 
+                            '${media.extension}', '${media.createDate}', ${media.size}, '${media.path.replace(/'/g, "''")}')`;
+                        separator = ","
+                    }
+                    group++;
+                }
+            }
+
+            let query = `INSERT INTO tempDuplicates ('group', 'id', 'fileName', 'extension', 'createDate', 'size', 'path') VALUES ${values}`;
+            db.execute(query);
+
+            return true;
+        } catch (ex) {
+            console.error(ex);
+            return false;
         }
     }
 

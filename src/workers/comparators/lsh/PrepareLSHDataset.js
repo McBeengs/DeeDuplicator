@@ -9,6 +9,14 @@ const PrepareLSHDataset = {
             const LSHMinHash = require("./LSHMinHash");
 
             let totalSize = mediaToCompare.length;
+
+            // must have at the very least a few files for LSH to work
+            if (totalSize < 10) {
+                let ret = [];
+                ret.push([]);
+                return ret;
+            }
+
             let stages = 2;
             let size = totalSize;
             let buckets = totalSize / 2000;

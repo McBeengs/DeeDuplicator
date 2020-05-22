@@ -6,6 +6,44 @@ export default class RendererOperations {
     constructor() {
         db = new SQLiteService();
     }
+
+    getDuplicates() {
+        try {
+            let query = db.query("SELECT * FROM tempDuplicates");
+
+            if (!query || query.length <= 0) {
+                return [];
+            }
+
+            let dictionary = [];
+
+            while (query.length) {
+                let line = query.pop();
+
+                if (dictionary[line.group]) {
+                    dictionary[line.group].push(line);
+                } else {
+                    const groupId = line.group;
+                    let array = [];
+                    array.push(line);
+                    dictionary[groupId] = array;
+                }
+            }
+
+            let result = [];
+
+            while (dictionary.length) {
+                let item = dictionary.pop();
+                if (item) {
+                    result.push(item)
+                }
+            }
+
+            return result.reverse();
+        } catch (ex) {
+            return [];
+        }
+    }
     
     switchDirectories(mediaLeft, mediaRight) {
         try {
