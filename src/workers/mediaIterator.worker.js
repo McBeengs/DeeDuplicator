@@ -11,6 +11,18 @@ const mediaTable = [
     {
         extensions: ["jpg", "jpeg", "png", "gif", "bmp", "svg"],
         service: "images.service"
+    },
+    {
+        extensions: ["mp4", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov"],
+        service: "videos.service"
+    },
+    {
+        extensions: ["mp3", "ogg", "wma", "raw", "flac"],
+        service: "audios.service"
+    },
+    {
+        extensions: ["zip", "rar"],
+        service: "compressed.service"
     }
 ]
 let service;
@@ -21,21 +33,48 @@ let service;
 const rootPath = process.argv[2];
 const extensions = process.argv[3];
 
-const comparator = "lsh";
+const comparator = "bruteforce";
 const differenceAlgorithm = "hamming";
 const threshold = 0.85;
 const skipWhenNoNewFiles = false;
 
 const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.worker.js"), {
-    minWorkers: 1,
-    maxWorkers: 10
+    minWorkers: 10,
+    maxWorkers: 24
 });
 
 let comparatorPool;
+let serviceObjectName = undefined;
 
 function entryPoint() {
     try {
         db.clearTempFilesTable();
+
+        let extensionsArray = extensions.split(",");
+
+        // Get the appropiate service for the file type. In theory, a array will only have one type of file at any time
+        for (let i = 0; i < mediaTable.length; i++) {
+            const type = mediaTable[i];
+            let serviceFound = false;
+
+            for (let j = 0; j < extensionsArray.length; j++) {
+                if (type.extensions.includes(extensionsArray[j])) { // At least for now all files in slice are the same type
+                    serviceObjectName = type.service;
+                    serviceFound = true;
+                    break;
+                }   
+            }
+
+            if (serviceFound) break;
+        }
+
+        if (!serviceObjectName) {
+            console.error("No service was found for the extensions informed. Aborting worker.");
+            process.send({
+                event: "processFinished", data: []
+            });
+            return;
+        }
 
         getAllFilesRecursively(rootPath, extensions).then((success) => {
 
@@ -68,7 +107,6 @@ entryPoint();
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let mediaToCompare = [];
-
 let idsMediasProcessed = [];
 
 function processFilesChunk() {
@@ -77,7 +115,7 @@ function processFilesChunk() {
     for (let index = 0; index < chunk.length; index++) {
         const file = chunk[index].path;
 
-        processFilesPool.exec('processFile', [file])
+        processFilesPool.exec('processFile', [file, serviceObjectName])
             .catch(err => {
                 console.error(err);
                 process.send({ event: "onException", data: err });
@@ -120,47 +158,21 @@ function processFilesChunk() {
 }
 
 function compareAlgorithm(comparator) {
-    // Get the appropiate service for the file type
-    // TODO: fix this later
-    let ServiceObject = require(`../services/images.service`);
-    // for (let i = 0; i < mediaTable.length; i++) {
-    //     const type = mediaTable[i];
-    //     if (type.extensions.includes(fileBeingCompared.extension)) { // At least for now all files in slice are the same type
-    //         ServiceObject = require(`../../services/${type.service}`);
-    //         break;
-    //     }
-    // }
+    let ServiceObject = require(`../services/${serviceObjectName}`);
     service = new ServiceObject();
     
     switch (comparator) {
         default:
-        case "dynamic":
-            dynamicAlgorithm();
+        case "lsh":
+            lshAlgorithm();
             break;
         case "bruteforce":
             bruteforceAlgorithm();
-            break;
-        case "lsh":
-            lshAlgorithm();
             break;
     }
 }
 
 let comparedIds = [];
-
-///////////////////////////// Dynamic algorithm ////////////////////////////////
-
-function dynamicAlgorithm() {
-    comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/dynamic.comparator.js`), {
-        minWorkers: 1,
-        maxWorkers: 10
-    });
-
-    mediaToCompare = db.getNonComparedMedias(idsMediasProcessed);
-    process.send({ event: "filesToCompare", data: mediaToCompare.length });
-}
-
-/////////////////////////// End Dynamic algorithm //////////////////////////////
 
 /////////////////////////// Bruteforce algorithm ///////////////////////////////
 
@@ -187,7 +199,7 @@ function processBruteforceAlgorithmChunk() {
         // const idFileBeingCompared = tempArray.pop().id;
         const idFileBeingCompared = tempArray.pop();
 
-        comparatorPool.exec('compare', [idFileBeingCompared, comparedIds, differenceAlgorithm, threshold])
+        comparatorPool.exec('compare', [idFileBeingCompared, comparedIds, differenceAlgorithm, threshold, serviceObjectName])
             .catch(err => {
                 console.error(err);
                 process.send({ event: "onException", data: err });
@@ -266,14 +278,14 @@ function processLshAlgorithmChunk() {
     // filter the combinations so that only relevant similar pairs are fed to the workers. By similar it's assumed a relative distance of < 0.3 of each file type
     // equivalent of the implementation of "getRelativeDistance"
     combinations = combinations.filter(c => {
-        return service.getRelativeDistance(c[0], c[1]) < 0.3;
+        return service.getRelativeDistance(c[0], c[1]) <= 0.15;
     });
     console.log(`Starting new bucket: ${numBucketMedias} total medias in this bucket | ${buckets.length} buckets remaining | ${combinations.length} total combinations to process`);
 
     while (combinations.length) {
         const combinationChunk = combinations.splice(0, 10000);
 
-        comparatorPool.exec('compare', [combinationChunk, differenceAlgorithm, threshold])
+        comparatorPool.exec('compare', [combinationChunk, differenceAlgorithm, threshold, serviceObjectName])
             .catch(err => {
                 console.error(err);
                 process.send({ event: "onException", data: err });
@@ -295,22 +307,6 @@ function processLshAlgorithmChunk() {
                 }
             });
     }
-
-    // while (bucketMedias.length) {
-    //     const fileBeingCompared = bucketMedias.pop();
-
-    //     comparatorPool.exec('compare', [fileBeingCompared, comparedBucketMedias, differenceAlgorithm, threshold])
-    //         .catch(err => {
-    //             console.error(err);
-    //             process.send({ event: "onException", data: err });
-    //         })
-    //         .then((dupesFound) => {
-    //             process.send({ event: "onFileCompared", data: fileBeingCompared.id });
-    //             db.insertMediasCompared(dupesFound)
-    //         });
-
-    //         comparedBucketMedias.push(fileBeingCompared);
-    // }
 
     const workerChecker = setInterval(() => {
         // console.log(`comparatorPool.stats.pendingTasks: ${comparatorPool.stats().pendingTasks} | buckets.length: ${buckets.length}`);

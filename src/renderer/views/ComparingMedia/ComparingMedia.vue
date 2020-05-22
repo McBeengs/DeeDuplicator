@@ -77,7 +77,6 @@ export default {
             }
         },
         onItemMenuClick(event, item) {
-            this.getDuplicatesFromDb();
             switch (item.id) {
                 case "ignore":
                 default:

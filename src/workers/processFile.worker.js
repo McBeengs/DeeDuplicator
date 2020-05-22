@@ -5,16 +5,8 @@ const fs = require('fs');
 const MediaOperations = require("../db/media.operations");
 const db = new MediaOperations();
 
-// TODO: should this be configurable?
-const mediaTable = [
-    {
-        extensions: ["jpg", "jpeg", "png", "gif", "bmp", "svg"],
-        service: "images.service"
-    }
-]
-
 define(['workerpool/dist/workerpool'], function(workerpool) {
-    async function processFile(file) {
+    async function processFile(file, serviceObjectName) {
         const media = {};
         const fileStats = fs.statSync(file);
         media.filename = file.substring(file.lastIndexOf("\\") + 1);
@@ -28,16 +20,7 @@ define(['workerpool/dist/workerpool'], function(workerpool) {
         fileId = await db.insertMedia(media);
         media.id = fileId;
 
-        // Get the appropiate server for the file type
-        let ServiceObject = {}
-        for (let i = 0; i < mediaTable.length; i++) {
-            const type = mediaTable[i];
-            if (type.extensions.includes(media.extension)) {
-                ServiceObject = require(`../services/${type.service}`);
-                break;
-            }
-        }
-
+        ServiceObject = require(`../services/${serviceObjectName}`);
         const service = new ServiceObject();
         const result = await service.processMedia(media);
         if (!result) { // Something went wrong and no media was persisted
