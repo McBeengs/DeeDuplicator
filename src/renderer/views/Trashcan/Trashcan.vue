@@ -49,8 +49,9 @@ import { SidebarMenu } from 'vue-sidebar-menu'
 import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
 import moment from 'moment'
 import trash from 'trash'
-import del from 'del'
 const shell = require('electron').shell;
+
+import * as fs from 'fs'
 
 import { Menu } from './trashcanSideMenu.js'
 
@@ -145,10 +146,22 @@ export default {
                 (async () => {
                     await trash(paths);
                 })();
+
+                this.tableItems.forEach((file) => {
+                    this.$store.dispatch({
+                        type: "removeItem",
+                        item: file
+                    });
+                });
             } else {
-                (async () => {
-                    await del(paths);
-                })();
+                this.tableItems.forEach((file) => {
+                    fs.unlinkSync(file.path);
+
+                    this.$store.dispatch({
+                        type: "removeItem",
+                        item: file
+                    });
+                });
             }
 
             this.$refs.modalConfirmDelete.close();

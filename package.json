@@ -99,7 +99,6 @@
     "chalk": "^2.4.1",
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.4.2",
-    "del": "^3.0.0",
     "devtron": "^1.4.0",
     "electron": "4.0.3",
     "electron-builder": "^21.2.0",

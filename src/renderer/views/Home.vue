@@ -31,7 +31,7 @@ const ipcMain = electron.remote.ipcMain;
 export default {
     data() {
         return {
-            input: '\\\\THEONETOYETBENA\\The Vault\\Artwork & Comics\\D33pW3b'
+            input: 'D:\\Windows\\Desktop\\stuff'
         };
     },
     methods: {
