@@ -3,10 +3,19 @@
         <sidebar-menu :menu="menu" :collapsed="true" @item-click="onItemMenuClick"/>
 
         <div class="layout-container">
-            <grid-layout v-if="viewActive === 'grid'" :duplicateGroups="duplicateGroups"></grid-layout>
-            <group-layout v-if="viewActive === 'group'" :duplicateGroups="duplicateGroups"></group-layout>
-            <each-group-layout v-if="viewActive === 'eachGroup'" :duplicateGroups="duplicateGroups"></each-group-layout>
+            <grid-layout v-if="viewActive === 'grid'" :duplicateGroups="duplicateGroups" :openEachGroupLayout="openEachGroupLayout"></grid-layout>
+            <group-layout v-if="viewActive === 'group'" :duplicateGroups="duplicateGroups" :openEachGroupLayout="openEachGroupLayout"></group-layout>
+            <each-group-layout v-if="viewActive === 'eachGroup'" :duplicateGroups="duplicateGroups" :openWithGroup="groupToOpen"></each-group-layout>
         </div>
+
+        <sweet-modal ref="modalNoDuplicateGroups" hide-close-button blocking >
+            <p style="font-size: 44px">🎉</p>
+            Good news! No duplicate files were founded on the folder selected. There's nothing to compare here.
+            <hr>
+            If you think that there is something we missed, you can try changing the algorithm's params into the "Settings" screen.
+
+            <button slot="button" class="btn btn-success" @click="redirectToHome">Start new search</button>
+        </sweet-modal>
 
         <sweet-modal icon="warning" ref="modalFinishComparison">
             By finishing the comparison, all the files selected will be moved to the trashcan. 
@@ -32,7 +41,6 @@ import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
 import GridLayout from './Layouts/GridLayout.vue'
 import GroupLayout from './Layouts/GroupLayout.vue'
 import EachGroupLayout from './Layouts/EachGroupLayout.vue'
-import store from "../../store/index";
 import RendererOperations from '../../db/renderer.operations'
 const db = new RendererOperations();
 
@@ -51,17 +59,22 @@ export default {
     mounted() {
         window.addEventListener('unload', () => {
             if (!this.isBeingFinished) {
-                store.dispatch({
+                this.$store.dispatch({
                     type: "setDuplicates",
                     duplicates: this.duplicateGroups
                 });
             }
         });
+
+        if (this.duplicateGroups.length <= 0) {
+            this.$refs.modalNoDuplicateGroups.open();
+        }
     },
     data() {
         return {
             duplicateGroups: [],
             menu: Menu,
+            groupToOpen: null,
             isBeingFinished: false,
 
             viewActive: 'grid'
@@ -76,6 +89,16 @@ export default {
                 this.duplicateGroups = dbDuplicates;
             }
         },
+
+        redirectToHome() {
+            this.$router.push({ path: '/home' });
+        },
+
+        openEachGroupLayout(group) {
+            this.groupToOpen = group;
+            this.viewActive = "eachGroup";
+        },
+
         onItemMenuClick(event, item) {
             switch (item.id) {
                 case "ignore":
@@ -110,6 +133,9 @@ export default {
                     break;
                 case "oldestFile":
                     this.checkByDate("oldest");
+                    break;
+                case "unselectAll":
+                    this.unselectAll();
                     break;
                 case "goHome":
                     this.$router.push('/home');
@@ -167,6 +193,20 @@ export default {
             }
         },
 
+        unselectAll() {
+            for (let i = 0; i < this.duplicateGroups.length; i++) {
+                const group = this.duplicateGroups[i];
+                
+                if (!group) {
+                    continue;
+                }
+
+                for (let j = 0; j < group.length; j++) {
+                    group[j].checked = false;
+                }
+            }
+        },
+
         finishComparison(whitelist) {
             let uniqueIds = [];
             let trash = [];
@@ -193,13 +233,13 @@ export default {
             }
 
             if (trash.length > 0) {
-                store.dispatch({
+                this.$store.dispatch({
                     type: "setTrash",
                     trash: trash
                 });
             }
 
-            store.dispatch({
+            this.$store.dispatch({
                 type: "setDuplicates",
                 duplicates: []
             });

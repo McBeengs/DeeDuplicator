@@ -11,13 +11,22 @@
             </template>
             <template v-slot:cell(fileName)="data" >
                 <button class="btn btn-link" @click="openFile(data.item.path)">
-                    {{ data.item.fileName.length > 80 ? data.item.fileName.substring(0, 80) + '...' : data.item.fileName  }}
+                    {{ data.item.fileName.length > 45 ? data.item.fileName.substring(0, 45) + '...' : data.item.fileName  }}
                 </button>
             </template>
-            <template v-slot:cell(path)="data" ><p>{{ data.item.path }}</p></template>
+            <template v-slot:cell(path)="data" >
+                <p>{{ data.item.path.length > 60 ? data.item.path.substring(0, 60) + '...' : data.item.path }}</p>
+            </template>
             <template v-slot:cell(size)="data" ><p>{{ formatBytes(data.item.size) }}</p></template>
             <template v-slot:cell(createDate)="data"><p style="min-width: 100px;"> {{ formatDate(data.item.createDate) }}</p></template>
         </b-table>
+
+        <sweet-modal ref="modalConfirmSpare" hide-close-button blocking>
+            Do you want to spare all the files? This action cannot be undone and will require another comparison if need be. 
+
+            <button slot="button" class="btn btn-primary" @click="$refs.modalConfirmSpare.close()" style="margin-right: 10px;">No</button>
+            <button slot="button" class="btn btn-danger" @click="spareFiles()" >Yes</button>
+        </sweet-modal>
 
         <sweet-modal ref="modalConfirmDelete" hide-close-button blocking>
             Do you want to move them to the OS trashcan or permanently delete (the last one is irreversible)?
@@ -78,6 +87,9 @@ export default {
                 case "deleteAll":
                     this.$refs.modalConfirmDelete.open();
                     break;
+                case "spareAll":
+                    this.$refs.modalConfirmSpare.open();
+                    break;
                 case "goHome":
                     this.$router.push('/home');
             }
@@ -106,10 +118,17 @@ export default {
 
         spareFile(file) {
             this.tableItems.splice( this.tableItems.indexOf(file), 1 );
-            this.$store.dispatch({
-                type: "removeItem",
-                item: file
+        },
+
+        spareFiles() {
+            this.tableItems.forEach((file) => {
+                this.$store.dispatch({
+                    type: "removeItem",
+                    item: file
+                });
             });
+
+            this.$router.push({ path: "/home" });
         },
 
         deleteFiles(definitively) {
@@ -162,6 +181,12 @@ export default {
 
         button {
             font-size: 0.875rem;
+        }
+
+        td { 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            word-wrap: break-word;
         }
     }
 

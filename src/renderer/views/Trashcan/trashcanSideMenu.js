@@ -15,6 +15,11 @@ export const Menu = [
         id: 'deleteAll'
     },
     {
+        title: 'Spare all the files',
+        icon: 'fas fa-eraser',
+        id: 'spareAll'
+    },
+    {
         component: separator,
         id: 'ignore'
     },

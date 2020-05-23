@@ -345,6 +345,10 @@ module.exports = class MediaOperations {
                 }
             }
 
+            if (!values) {
+                return true;
+            }
+
             let query = `INSERT INTO tempDuplicates ('group', 'id', 'fileName', 'extension', 'createDate', 'size', 'path') VALUES ${values}`;
             db.execute(query);
 

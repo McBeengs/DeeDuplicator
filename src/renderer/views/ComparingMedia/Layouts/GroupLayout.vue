@@ -27,12 +27,15 @@
 
         <div class="groups-container">
             <div class="group-container row" v-for="(group, index) in getGroupsSlice()" v-bind:key="index">
-                <div class="col-xs-8 col-sm-4 col-md-4 col-lg-3 col-xl-3" v-for="(media) in group" v-bind:key="media.id">
+                <div class="col-xs-8 col-sm-4 col-md-4 col-lg-3 col-xl-3" v-for="(media) in group" v-bind:key="media.id"
+                    @contextmenu="$easycm($event,$root,1); contextMenuOpened(media)">
                     <media-pill :media="media" :onClick="onMediaClick" :showInfo="true"></media-pill>
                 </div>
                 <hr>
             </div>
         </div>
+
+        <easy-cm :list="contextMenuList" :tag="1" @ecmcb="contextMenuOptionClicked" :itemWidth="330"></easy-cm>
     </div>
 </template>
 
@@ -43,9 +46,11 @@ export default {
     components: {
         MediaPill
     },
-    props: ["duplicateGroups"],
+    props: ["duplicateGroups", "openEachGroupLayout"],
     data() {
         return {
+            contextMenuItem: {},
+            contextMenuList: [{ text: "Open \"Compare Group by Group\" with this file", icon: "" }],
             optionsPerPageSelection: [50, 100, 1000, 5000, 10000, 1000000, 1000000000],
             currentPage: 1,
 
@@ -56,20 +61,33 @@ export default {
         }
     },
     beforeMount() {
-        for (let i = 0; i < this.duplicateGroups.length; i++) {
-            const group = this.duplicateGroups[i];
-            
-            for (let j = 0; j < group.length; j++) {
-                const media = group[j];
-                this.totalFiles++;
-                if (media.checked) {
-                    this.totalFilesSelected++;
-                    this.totalBytesSelected += media.size;
-                }
-            }
-        }
+        this.calculateSelectedMedias();
     },
     methods: {
+        calculateSelectedMedias() {
+            for (let i = 0; i < this.duplicateGroups.length; i++) {
+                const group = this.duplicateGroups[i];
+                
+                for (let j = 0; j < group.length; j++) {
+                    const media = group[j];
+                    this.totalFiles++;
+                    if (media.checked) {
+                        this.totalFilesSelected++;
+                        this.totalBytesSelected += media.size;
+                    }
+                }
+            }
+        },
+        contextMenuOpened(item) {
+            this.contextMenuItem = item;
+        },
+        contextMenuOptionClicked(indexList){
+            switch(indexList) {
+                default:
+                    this.openEachGroupLayout(this.contextMenuItem);
+                    break;
+            }
+        },
         onMediaClick(item) {
             item.checked = !item.checked;
 
@@ -96,6 +114,16 @@ export default {
             const i = Math.floor(Math.log(bytes) / Math.log(k));
 
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+    },
+    watch: {
+        duplicateGroups: {
+            handler() {
+                this.totalFiles = 0;
+                this.totalFilesSelected = 0;
+                this.totalBytesSelected = 0;
+                this.calculateSelectedMedias();
+            }, deep: true
         }
     }
 }

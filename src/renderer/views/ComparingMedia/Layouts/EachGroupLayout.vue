@@ -85,7 +85,7 @@ export default {
         MediaPill,
         ImageCard
     },
-    props: ["duplicateGroups"],
+    props: ["duplicateGroups", "openWithGroup"],
     data() {
         return {
             currentGroupIndex: 0,
@@ -101,9 +101,32 @@ export default {
             this.mediaRight = {size: 0, createDate: ''};
             return;
         }
-        this.currentGroup = this.duplicateGroups[this.currentGroupIndex];
+
+        if (this.openWithGroup) {
+            let index = 0;
+            let groupFonded = false;
+            
+            for (let i = 0; i < this.duplicateGroups.length; i++) {
+                const g = this.duplicateGroups[i];
+                for (let j = 0; j < g.length; j++) {
+                    if (g[j].id === this.openWithGroup.id) {
+                        this.currentGroup = this.duplicateGroups[i];
+                        groupFonded = true;
+                        break;
+                    }
+                }
+
+                if (groupFonded) break;
+                index++;
+            }
+
+            this.currentGroupIndex = index;
+        } else {
+            this.currentGroup = this.duplicateGroups[this.currentGroupIndex];
+        }
+
         this.mediaLeft = this.currentGroup[0];
-        this.mediaRight = this.currentGroup[1]
+        this.mediaRight = this.currentGroup[1];
     },
     methods: {
         nextGroupClick() {

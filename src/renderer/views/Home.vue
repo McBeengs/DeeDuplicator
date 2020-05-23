@@ -7,6 +7,7 @@
                         <input type="text" class="form-control" v-model="input">
                         <button @click="selectDirectory()">click me!</button>
                         <button @click="clearCache()">Clear Cache</button>
+                        <button @click="openTrashcan()">See trashcan</button>
                     </div>
                 </div>
             </div>
@@ -23,7 +24,6 @@
 </template>
 
 <script>
-import store from "../store/index"
 const electron = require("electron");
 const BrowserWindow = electron.remote.BrowserWindow;
 const ipcMain = electron.remote.ipcMain;
@@ -43,7 +43,7 @@ export default {
             //     }
             //   );
 
-            if (store.getters.checkIfHasComparisonUnfinished) {
+            if (this.$store.getters.checkIfHasComparisonUnfinished) {
                 this.$refs.modalComparisonInProgress.open();
             } else {
                 this.startSearchProcess();
@@ -51,24 +51,28 @@ export default {
         },
 
         clearCache() {
-            store.dispatch({
+            this.$store.dispatch({
                 type: "setDuplicates",
                 duplicates: []
             });
 
-            store.dispatch({
+            this.$store.dispatch({
                 type: "setTrash",
                 trash: []
             });
         },
 
+        openTrashcan() {
+            this.$router.push({ path: '/trashcan' });
+        },
+
         startSearchProcess() {
-            store.dispatch({
+            this.$store.dispatch({
                 type: "setDuplicates",
                 duplicates: []
             });
 
-            store.dispatch({
+            this.$store.dispatch({
                 type: "setPreparedSearch",
                 preparedSearch: {
                     directories: [this.input],

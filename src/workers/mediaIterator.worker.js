@@ -33,7 +33,7 @@ let service;
 const rootPath = process.argv[2];
 const extensions = process.argv[3];
 
-const comparator = "bruteforce";
+const comparator = "lsh";
 const differenceAlgorithm = "hamming";
 const threshold = 0.85;
 const skipWhenNoNewFiles = false;

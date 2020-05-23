@@ -28,18 +28,23 @@
 
         <b-table id="gridTable" :items="tableItems" :fields="fields" :per-page="filesPerPage" 
             :current-page="currentPage" :tbody-tr-class="rowClass" @row-clicked="rowClick">
-            <template v-slot:cell(checked)="data" >
-                <span v-if="data.item.checked"><i class="fas fa-trash-alt"></i></span>
+            <template v-slot:cell(checked)="data">
+                <span v-if="data.item.checked" @click="rowClick"><i class="fas fa-trash-alt" @click="rowClick"></i></span>
                 <!-- <input type="checkbox" v-model="data.item.checked" v-on:input="checkboxClick(data.item)"> -->
             </template>
             <template v-slot:cell(fileName)="data" >
-                <button class="btn btn-link" @click="openFile(data.item.path)">
-                    {{ data.item.fileName.length > 80 ? data.item.fileName.substring(0, 80) + '...' : data.item.fileName  }}
+                <button class="btn btn-link media-button" @click="openFile(data.item.path)" @contextmenu="$easycm($event,$root,1); contextMenuOpened(data.item)">
+                    {{ data.item.fileName.length > 45 ? data.item.fileName.substring(0, 45) + '...' : data.item.fileName  }}
                 </button>
+            </template>
+            <template v-slot:cell(path)="data" >
+                <p @contextmenu="$easycm($event,$root,1); contextMenuOpened(data.item)">{{ data.item.path }}</p>
             </template>
             <template v-slot:cell(size)="data" >{{ formatBytes(data.item.size) }}</template>
             <template v-slot:cell(createDate)="data"><p style="min-width: 100px;"> {{ formatDate(data.item.createDate) }}</p></template>
         </b-table>
+
+        <easy-cm :list="contextMenuList" :tag="1" @ecmcb="contextMenuOptionClicked" :itemWidth="330"></easy-cm>
     </div>
 </template>
 
@@ -48,7 +53,7 @@ import moment from 'moment'
 const shell = require('electron').shell;
 
 export default {
-    props: ["duplicateGroups"],
+    props: ["duplicateGroups", "openEachGroupLayout"],
     data() {
         return {
             fields: [
@@ -58,6 +63,8 @@ export default {
                 { key: 'size', label: "Size" },
                 { key: 'createDate', label: "Created Date" }
             ],
+            contextMenuItem: {},
+            contextMenuList: [{ text: "Open \"Compare Group by Group\" with this file", icon: "" }],
             optionsPerPageSelection: [50, 100, 1000, 5000, 10000, 1000000, 1000000000],
             tableItems: [],
             currentPage: 1,
@@ -68,25 +75,40 @@ export default {
         }
     },
     beforeMount() {
-        let groupOdd = false;
-
-        for (let i = 0; i < this.duplicateGroups.length; i++) {
-            const group = this.duplicateGroups[i];
-
-            for (let j = 0; j < group.length; j++) {
-                let media = group[j];
-                media.cssClass = groupOdd ? "odd" : "even";
-                if (media.checked) {
-                    this.totalFilesSelected++;
-                    this.totalBytesSelected += media.size;
-                }
-                this.tableItems.push(media)
-            }
-            groupOdd = !groupOdd;   
-        }
-
+        this.calculateSelectedMedias();
     },
     methods: {
+        calculateSelectedMedias() {
+            let groupOdd = false;
+
+            for (let i = 0; i < this.duplicateGroups.length; i++) {
+                const group = this.duplicateGroups[i];
+
+                for (let j = 0; j < group.length; j++) {
+                    let media = group[j];
+                    media.cssClass = groupOdd ? "odd" : "even";
+                    if (media.checked) {
+                        this.totalFilesSelected++;
+                        this.totalBytesSelected += media.size;
+                    }
+                    this.tableItems.push(media)
+                }
+                groupOdd = !groupOdd;   
+            }
+        },
+
+        contextMenuOpened(item) {
+            this.contextMenuItem = item;
+        },
+
+        contextMenuOptionClicked(indexList){
+            switch(indexList) {
+                default:
+                    this.openEachGroupLayout(this.contextMenuItem);
+                    break;
+            }
+        },
+
         rowClass(item, type) {
             if (!item || type !== 'row') {
                 return;
@@ -116,6 +138,10 @@ export default {
                 return '0 Bytes';
             }
 
+            if (isNaN(bytes)) {
+                return '0 Bytes';
+            }
+
             const k = 1024;
             const dm = decimals <= 0 ? 0 : decimals || 2;
             const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
@@ -126,6 +152,17 @@ export default {
 
         formatDate(date) {
             return moment(new Date(date)).format("YYYY/MM/DD");
+        }
+    },
+    watch: {
+        duplicateGroups: {
+            handler() {
+                this.totalFiles = 0;
+                this.tableItems = [];
+                this.totalFilesSelected = 0;
+                this.totalBytesSelected = 0;
+                this.calculateSelectedMedias();
+            }, deep: true
         }
     }
 }
@@ -139,6 +176,23 @@ export default {
 
         p {
             margin: 0;
+        }
+
+        tbody tr td:nth-child(1) {
+            min-width: 45px;
+            height: 100%;
+            padding-right: 0;
+            padding-top: 8px;
+            padding-bottom: 8px;
+
+            span i {
+                max-width: 45px;
+            }
+        }
+
+        .media-button {
+            text-align: left;
+            padding: 0;
         }
     }
 

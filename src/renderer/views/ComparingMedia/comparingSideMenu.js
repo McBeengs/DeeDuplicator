@@ -78,6 +78,11 @@ export const Menu = [
                 icon: 'fas fa-calendar-minus',
                 id: 'oldestFile'
             },
+            {
+                title: "Uncheck all",
+                icon: 'fas fa-calendar-minus',
+                id: 'unselectAll'
+            },
         ]
     },
     {
