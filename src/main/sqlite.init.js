@@ -65,6 +65,15 @@ export function initializeSQLite() {
     )`);
     image.run();
 
+    const video = db.prepare(`
+    CREATE TABLE IF NOT EXISTS video (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        idMedia INTEGER NOT NULL,
+        lowResHash VARCHAR(24) NOT NULL,
+        pHash TEXT NULL
+    )`);
+    video.run();
+
     const mediaException = db.prepare(`
     CREATE TABLE IF NOT EXISTS mediaException (
         path TEXT NOT NULL

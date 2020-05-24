@@ -31,7 +31,7 @@ const ipcMain = electron.remote.ipcMain;
 export default {
     data() {
         return {
-            input: 'D:\\Windows\\Desktop\\stuff'
+            input: 'D:\\Windows\\Downloads'
         };
     },
     methods: {
@@ -76,7 +76,7 @@ export default {
                 type: "setPreparedSearch",
                 preparedSearch: {
                     directories: [this.input],
-                    extensions: ["jpg", "jpeg", "png", "gif", "bmp"]
+                    extensions: ["mp4", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov"]
                 }
             });
 

@@ -36,11 +36,11 @@ const extensions = process.argv[3];
 const comparator = "lsh";
 const differenceAlgorithm = "hamming";
 const threshold = 0.70;
-const skipWhenNoNewFiles = true;
+const skipWhenNoNewFiles = false;
 
 const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.worker.js"), {
-    minWorkers: 10,
-    maxWorkers: 24
+    minWorkers: 1,
+    maxWorkers: 1
 });
 
 let comparatorPool;

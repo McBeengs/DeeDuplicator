@@ -4,6 +4,7 @@ import { app } from 'electron'
 import { initializeSQLite } from './sqlite.init'
 import { initIpcListeners } from './ipcProcesses'
 const windowManager = require('electron-window-manager');
+const Path = require('path');
 
 initializeSQLite();
 initIpcListeners();
@@ -15,6 +16,23 @@ initIpcListeners();
 if (process.env.NODE_ENV !== 'development') {
   global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
+
+// Workaround for production build not finding ffmpeg
+// The path can break after production build
+// TODO: deal with other OS's
+const ffmpegDirectory = process.env.NODE_ENV === 'development' ?
+  Path.resolve(__dirname, "../../bin/ffmpeg.exe") : Path.resolve(__dirname, "../../../../bin/ffmpeg.exe");
+
+const ffprobeDirectory = process.env.NODE_ENV === 'development' ?
+  Path.resolve(__dirname, "../../bin/ffprobe.exe") : Path.resolve(__dirname, "../../../../bin/ffprobe.exe");
+
+const gifskiDirectory = process.env.NODE_ENV === 'development' ?
+  Path.resolve(__dirname, "../../bin/gifski.exe") : Path.resolve(__dirname, "../../../../bin/gifski.exe");
+  
+
+process.env.FFMPEG_PATH = ffmpegDirectory;
+process.env.FFPROBE_PATH = ffprobeDirectory;
+process.env.GIFSKI_PATH = gifskiDirectory;
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development' ? `http://localhost:9080` : `file://${__dirname}/index.html`
