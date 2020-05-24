@@ -44,10 +44,18 @@ export const Menu = [
             //     icon: 'fas fa-scroll',
             //     id: 'customRule'
             // },
-            // {
-            //     component: separator,
-            //     id: 'ignore'
-            // },
+            {
+                title: "Custom select FA and stuff",
+                id: 'fa'
+            },
+            {
+                title: "Custom select BBW and stuff",
+                id: 'bbw'
+            },
+            {
+                component: separator,
+                id: 'ignore'
+            },
             {
                 title: "Biggest size on group",
                 icon: 'fas fa-sort-numeric-up-alt',

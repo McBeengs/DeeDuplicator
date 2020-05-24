@@ -39,7 +39,7 @@ const threshold = 0.70;
 const serviceOptions = {
     generateGifs: false
 };
-const skipWhenNoNewFiles = false;
+const skipWhenNoNewFiles = true;
 
 const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.worker.js"), {
     minWorkers: 10,

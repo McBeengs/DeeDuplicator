@@ -45,12 +45,12 @@ export default {
     props: ["media", "onClick", "showInfo", "onLeftClick", "onRightClick"],
     data() {
         return {
-
+            videos: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
         }
     },
     methods: {
         pathMedia(media) {
-            if (media.extension === "mp4") {
+            if (this.videos.indexOf(media.extension) > 0) {
                 let directory = process.env.NODE_ENV === 'development' ? Path.resolve(__dirname, "../../../Thumbnails/videos") : Path.resolve(__dirname, "../../Thumbnails/videos");
 
                 console.log(directory)
