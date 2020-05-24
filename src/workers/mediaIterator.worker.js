@@ -111,6 +111,8 @@ entryPoint();
 
 let mediaToCompare = [];
 let idsMediasProcessed = [];
+let pendingTasks = 0;
+let pendingTasksCount = 0;
 
 function processFilesChunk() {
     const chunk = db.getChunkTempFiles();
@@ -141,8 +143,22 @@ function processFilesChunk() {
     // The worker must be terminated in order to continue the process, but it doesn't have a native
     // way to gracefully terminate when all pending tasks are complete. So we have to monitor
     const workerChecker = setInterval(() => {
-        if (processFilesPool.stats().pendingTasks <= 0) {
-            processFilesPool.terminate(false).then(() => {
+
+        if (pendingTasks === processFilesPool.stats().pendingTasks) {
+            pendingTasksCount++;
+        } else {
+            pendingTasks = processFilesPool.stats().pendingTasks;
+            pendingTasksCount = 0;
+        }
+
+        if (processFilesPool.stats().pendingTasks <= 0 || pendingTasksCount > 15) {
+            if (pendingTasksCount > 15) {
+                console.log("Workerpool forcefully terminated due to inactivity");
+            }
+
+            processFilesPool.terminate(pendingTasksCount > 15).then(() => {
+                pendingTasksCount = 0;
+                pendingTasks = 0;
                 clearInterval(workerChecker);
 
                 if (db.getTempFilesTableSize() > 0) {
