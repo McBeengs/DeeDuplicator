@@ -77,7 +77,7 @@ export default {
             groupToOpen: null,
             isBeingFinished: false,
 
-            viewActive: 'grid'
+            viewActive: 'group'
         }
     },
     methods: {
@@ -87,6 +87,10 @@ export default {
 
             if (this.duplicateGroups.length !== dbDuplicates.length) {
                 this.duplicateGroups = dbDuplicates;
+                this.$store.dispatch({
+                    type: "setDuplicates",
+                    duplicates: this.duplicateGroups
+                });
             }
         },
 
@@ -116,6 +120,14 @@ export default {
                 case "customRule":
 
                     break;
+
+                case "fa":
+                    this.customCheckFA();
+                    break;
+                case "bbw":
+                    this.customCheckBBW();
+                    break;
+
                 case "biggestSize":
                     this.checkBySize("biggest");
                     break;
@@ -145,6 +157,107 @@ export default {
             }
         },
 
+        customCheckFA() {
+            for (let i = 0; i < this.duplicateGroups.length; i++) {
+                const group = this.duplicateGroups[i];
+
+                group.reduce((prev, current) => {
+                    if (!prev || !current) {
+                        return;
+                    }
+
+                    prev.checked = false;
+                    current.checked = false;
+
+                    if (prev.fileName === "default.png") {
+                        prev.checked = false;
+                    }
+
+                    if (current.fileName === "default.png") {
+                        prev.checked = false;
+                    }
+
+                    if (prev.path.indexOf("yiff.party") > 0) {
+                        if (prev.size > current.size) {
+                            current.checked = true;
+                        } else {
+                            prev.checked = true;
+                        }
+                    }
+
+                    if (current.path.indexOf("yiff.party") > 0) {
+                        if (current.size > prev.size) {
+                            prev.checked = true;
+                        } else {
+                            current.checked = true;
+                        }
+                    }
+
+                    // let artistName = media.path.substring(media.path.indexOf("FurAffinity"));
+                    // artistName = artistName.substring(artistName.indexOf("\\") + 1);
+                    // artistName = artistName.substring(0, artistName.indexOf("\\"));
+
+                    // let fileArtistName = media.fileName.substring(media.fileName.indexOf(".") + 1, media.fileName.indexOf("_"));
+
+                    // if (escape(artistName.trim()) !== escape(fileArtistName.trim())) {
+                    //     media.checked = true;
+                    //     continue;
+                    // }
+
+                    if (prev.size > current.size) {
+                        current.checked = true;
+                    } else {
+                        prev.checked = true;
+                    }
+                });
+            }
+            this.$store.dispatch({
+                type: "setRefreshDuplicateGroups",
+                refreshDuplicateGroups: Math.random()
+            });
+        },
+
+        customCheckBBW() {
+            for (let i = 0; i < this.duplicateGroups.length; i++) {
+                const group = this.duplicateGroups[i];
+                
+                group.reduce((prev, current) => {
+                    if (!prev || !current) {
+                        return;
+                    }
+
+                    prev.checked = false;
+                    current.checked = false;
+
+                    if (
+                        prev.path.indexOf("\\Sort\\") > 0 ||
+                        prev.path.indexOf("\\Downloads\\") > 0 ||
+                        prev.path.indexOf("\\StufferDB\\") > 0
+                    ) {
+                        prev.checked = true;
+                    }
+
+                    if (
+                        current.path.indexOf("\\Sort\\") > 0 ||
+                        current.path.indexOf("\\Downloads\\") > 0 ||
+                        current.path.indexOf("\\StufferDB\\") > 0
+                    ) {
+                        current.checked = true;
+                    }
+
+                    if (prev.size > current.size) {
+                        current.checked = true;
+                    } else {
+                        prev.checked = true;
+                    }
+                });
+            }
+            this.$store.dispatch({
+                type: "setRefreshDuplicateGroups",
+                refreshDuplicateGroups: Math.random()
+            });
+        },
+
         checkBySize(size) {
             for (let i = 0; i < this.duplicateGroups.length; i++) {
                 const group = this.duplicateGroups[i];
@@ -159,6 +272,10 @@ export default {
                     }
                 }).checked = true;
             }
+            this.$store.dispatch({
+                type: "setRefreshDuplicateGroups",
+                refreshDuplicateGroups: Math.random()
+            });
         },
 
         checkByPath(size) {
@@ -175,6 +292,10 @@ export default {
                     }
                 }).checked = true;
             }
+            this.$store.dispatch({
+                type: "setRefreshDuplicateGroups",
+                refreshDuplicateGroups: Math.random()
+            });
         },
 
         checkByDate(size) {
@@ -191,6 +312,10 @@ export default {
                     }
                 }).checked = true;
             }
+            this.$store.dispatch({
+                type: "setRefreshDuplicateGroups",
+                refreshDuplicateGroups: Math.random()
+            });
         },
 
         unselectAll() {
@@ -205,6 +330,10 @@ export default {
                     group[j].checked = false;
                 }
             }
+            this.$store.dispatch({
+                type: "setRefreshDuplicateGroups",
+                refreshDuplicateGroups: Math.random()
+            });
         },
 
         finishComparison(whitelist) {

@@ -76,6 +76,7 @@ export default {
     },
     beforeMount() {
         this.calculateSelectedMedias();
+        console.log(this.$store.state);
     },
     methods: {
         calculateSelectedMedias() {
@@ -155,14 +156,11 @@ export default {
         }
     },
     watch: {
-        duplicateGroups: {
-            handler() {
-                this.totalFiles = 0;
-                this.tableItems = [];
-                this.totalFilesSelected = 0;
-                this.totalBytesSelected = 0;
-                this.calculateSelectedMedias();
-            }, deep: true
+        '$store.state.ComparingFiles.refreshDuplicateGroups.refreshDuplicateGroups': function() {
+            this.totalFilesSelected = 0;
+            this.totalBytesSelected= 0;
+            this.calculateSelectedMedias();
+
         }
     }
 }

@@ -29,7 +29,7 @@
             <div class="group-container row" v-for="(group, index) in getGroupsSlice()" v-bind:key="index">
                 <div class="col-xs-8 col-sm-4 col-md-4 col-lg-3 col-xl-3" v-for="(media) in group" v-bind:key="media.id"
                     @contextmenu="$easycm($event,$root,1); contextMenuOpened(media)">
-                    <media-pill :media="media" :onClick="onMediaClick" :showInfo="true"></media-pill>
+                    <media-pill :media="media" :onClick="onMediaClick" :showInfo="true" :key="key"></media-pill>
                 </div>
                 <hr>
             </div>
@@ -54,6 +54,7 @@ export default {
             optionsPerPageSelection: [50, 100, 1000, 5000, 10000],
             currentPage: 1,
 
+            key: 0,
             filesPerPage: 50,
             totalFiles: 0,
             totalFilesSelected: 0,
@@ -117,13 +118,12 @@ export default {
         }
     },
     watch: {
-        duplicateGroups: {
-            handler() {
-                this.totalFiles = 0;
-                this.totalFilesSelected = 0;
-                this.totalBytesSelected = 0;
-                this.calculateSelectedMedias();
-            }, deep: true
+        '$store.state.ComparingFiles.refreshDuplicateGroups.refreshDuplicateGroups': function() {
+            this.totalFiles = 0;
+            this.totalFilesSelected = 0;
+            this.totalBytesSelected= 0;
+            this.calculateSelectedMedias();
+            this.key++;
         }
     }
 }

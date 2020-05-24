@@ -31,7 +31,7 @@ const ipcMain = electron.remote.ipcMain;
 export default {
     data() {
         return {
-            input: 'D:\\Windows\\Downloads'
+            input: '\\\\THEONETOYETBENA\\The Vault\\Artwork & Comics\\FurAffinity'
         };
     },
     methods: {
@@ -72,11 +72,13 @@ export default {
                 duplicates: []
             });
 
+            // ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
+
             this.$store.dispatch({
                 type: "setPreparedSearch",
                 preparedSearch: {
                     directories: [this.input],
-                    extensions: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
+                    extensions: ["png", "jpg", "jpeg", "gif"]
                 }
             });
 
