@@ -51,7 +51,7 @@ export default {
         return {
             contextMenuItem: {},
             contextMenuList: [{ text: "Open \"Compare Group by Group\" with this file", icon: "" }],
-            optionsPerPageSelection: [50, 100, 1000, 5000, 10000, 1000000, 1000000000],
+            optionsPerPageSelection: [50, 100, 1000, 5000, 10000],
             currentPage: 1,
 
             filesPerPage: 50,

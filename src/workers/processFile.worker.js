@@ -6,7 +6,7 @@ const MediaOperations = require("../db/media.operations");
 const db = new MediaOperations();
 
 define(['workerpool/dist/workerpool'], function(workerpool) {
-    async function processFile(file, serviceObjectName) {
+    async function processFile(file, serviceObjectName, serviceOptions) {
         const media = {};
         const fileStats = fs.statSync(file);
         media.filename = file.substring(file.lastIndexOf("\\") + 1);
@@ -22,7 +22,7 @@ define(['workerpool/dist/workerpool'], function(workerpool) {
 
         ServiceObject = require(`../services/${serviceObjectName}`);
         const service = new ServiceObject();
-        const result = await service.processMedia(media);
+        const result = await service.processMedia(media, serviceOptions);
         if (!result) { // Something went wrong and no media was persisted
             // await db.deleteFailedMedia(media.path);
             db.insertMediaException(file);

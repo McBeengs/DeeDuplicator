@@ -122,17 +122,15 @@ module.exports = class ImagesService {
         return db.getVideos(idMedias);
     }
 
-    processMedia(media) {
+    processMedia(media, serviceOptions) {
         return new Promise(async (resolve, reject) => {
-            let outputPathGrid = Path.join(directory, media.filename + ".png");
-            let outputPathGif = Path.join(directory, "gif" + media.id + ".gif");
+            let outputPathGrid = Path.join(directory, Buffer.from(media.filename).toString('base64') + ".png");
+            let outputPathGif = Path.join(directory, Buffer.from(media.filename).toString('base64') + ".gif");
 
             if (fs.existsSync(outputPathGrid) || fs.existsSync(outputPathGif)) {
                 resolve(true);
             }
 
-            fs.createWriteStream(outputPathGif);
-            
             ////// This works, but it is hyper slow
             // const metadataGrid = await generatePreview({
             //     input: media.path,
@@ -154,7 +152,7 @@ module.exports = class ImagesService {
                 metadata = {
                     width: videoMetadata.width,
                     height: videoMetadata.height,
-                    duration: videoMetadata.duration_ts,
+                    duration: Math.floor(videoMetadata.duration * 1000),
                     bitrate: videoMetadata.bit_rate,
                     framerate: videoMetadata.avg_frame_rate,
                     codec: videoMetadata.codec_name,
@@ -166,27 +164,36 @@ module.exports = class ImagesService {
 
             if (metadata) {
                 offset = Math.floor(metadata.duration / 2);
+                // console.log(`${metadata.duration} | ${offset}`);
                 media.metadata = metadata;
             }
 
-            await generatePreview({
-                input: media.path,
-                output: outputPathGif,
-                numFrames: 5,
-                gifski: {
-                    fps: 10,
-                    quality: 50,
-                    fast: true
-                }
-            });
+            if (serviceOptions.generateGif) {
+                fs.createWriteStream(outputPathGif);
+
+                await generatePreview({
+                    input: media.path,
+                    output: outputPathGif,
+                    numFrames: 5,
+                    gifski: {
+                        fps: 40,
+                        quality: 40,
+                        fast: true
+                    }
+                });
+            }
 
             await extractFrame({
                 input: media.path,
                 output: outputPathGrid,
-                // offset: offset,
+                offset: offset,
                 width: 640,
                 height: 480
             });
+
+            if (!fs.existsSync(outputPathGrid)) {
+                resolve(false);
+            }
 
             let data = await Hashes.calcImage_pHash(outputPathGrid);
             
@@ -206,8 +213,12 @@ module.exports = class ImagesService {
                         }
                     }
                 }
+
+                media.idMedia = media.id;
+                media.lowResHash = pixels;
+                media.pHash = data;
                 
-                const idInserted = await db.insertVideo({ idMedia: media.id, lowResHash: pixels, pHash: data });
+                const idInserted = await db.insertVideo(media);
                 resolve(true);
             } catch (err) {
                 console.log(err);

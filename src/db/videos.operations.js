@@ -14,6 +14,13 @@ module.exports = class VideosOperations {
                 media.fileName,
                 media.extension,
                 media.size,
+                video.width,
+                video.height,
+                video.duration,
+                video.bitrate,
+                video.framerate,
+                video.codec,
+                video.audio,
                 video.lowResHash,
                 video.pHash
             FROM media
@@ -48,6 +55,13 @@ module.exports = class VideosOperations {
                 media.fileName,
                 media.extension,
                 media.size,
+                video.width,
+                video.height,
+                video.duration,
+                video.bitrate,
+                video.framerate,
+                video.codec,
+                video.audio,
                 video.lowResHash,
                 video.pHash
             FROM media
@@ -80,7 +94,12 @@ module.exports = class VideosOperations {
     insertVideo(video) {
         return new Promise((resolve) => {
             const result =
-                db.execute(`INSERT INTO video (idMedia, lowResHash, pHash) VALUES (?, ?, ?)`, video.idMedia, video.lowResHash, video.pHash);
+                db.execute(`
+                INSERT INTO video (idMedia, width, height, duration, bitrate, framerate, codec, audio, lowResHash, pHash)
+                VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                video.idMedia, video.metadata.width, video.metadata.height, video.metadata.duration, video.metadata.bitrate,
+                video.metadata.framerate, video.metadata.codec, video.metadata.audio, video.lowResHash, video.pHash);
 
             resolve(result.lastInsertRowid);
         })
@@ -111,7 +130,7 @@ module.exports = class VideosOperations {
             values = "VALUES " + values;
         }
 
-        const result = db.query(`SELECT idMedia, size, lowResHash FROM media INNER JOIN image ON image.idMedia = media.id WHERE idMedia IN (${values})`);
+        const result = db.query(`SELECT idMedia, duration, lowResHash FROM video WHERE idMedia IN (${values})`);
 
         if (!result.length || result.length <= 0) {
             return 0;
@@ -119,7 +138,7 @@ module.exports = class VideosOperations {
             let results = [];
 
             for (let i = 0; i < result.length; i++) {
-                results.push({ xAxis: result[i].size, yAxis: result[i].lowResHash, id: result[i].idMedia });
+                results.push({ xAxis: result[i].duration, yAxis: result[i].lowResHash, id: result[i].idMedia });
             }
             return results;
         }

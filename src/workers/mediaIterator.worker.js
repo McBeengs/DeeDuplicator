@@ -36,11 +36,14 @@ const extensions = process.argv[3];
 const comparator = "lsh";
 const differenceAlgorithm = "hamming";
 const threshold = 0.70;
+const serviceOptions = {
+    generateGifs: false
+};
 const skipWhenNoNewFiles = false;
 
 const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.worker.js"), {
-    minWorkers: 1,
-    maxWorkers: 1
+    minWorkers: 10,
+    maxWorkers: 24
 });
 
 let comparatorPool;
@@ -115,7 +118,7 @@ function processFilesChunk() {
     for (let index = 0; index < chunk.length; index++) {
         const file = chunk[index].path;
 
-        processFilesPool.exec('processFile', [file, serviceObjectName])
+        processFilesPool.exec('processFile', [file, serviceObjectName, serviceOptions])
             .catch(err => {
                 console.error(err);
                 process.send({ event: "onException", data: err });

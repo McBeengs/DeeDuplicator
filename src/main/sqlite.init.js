@@ -14,20 +14,6 @@ export function initializeSQLite() {
     )`);
     media.run();
 
-    const metadata = db.prepare(`
-    CREATE TABLE IF NOT EXISTS metadata (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        idMedia INTEGER NOT NULL,
-        width INTEGER NULL,
-        height INTEGER NULL,
-        duration INTEGER NULL,
-        bitrate INTEGER NULL,
-        framerate INTEGER NULL,
-        codec TEXT NULL,
-        audio TEXT NULL
-    )`);
-    metadata.run();
-
     const comparisons = db.prepare(`
     CREATE TABLE IF NOT EXISTS comparison (
         a INTEGER NOT NULL,
@@ -69,6 +55,13 @@ export function initializeSQLite() {
     CREATE TABLE IF NOT EXISTS video (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         idMedia INTEGER NOT NULL,
+        width INTEGER NULL,
+        height INTEGER NULL,
+        duration INTEGER NULL,
+        bitrate INTEGER NULL,
+        framerate INTEGER NULL,
+        codec TEXT NULL,
+        audio TEXT NULL,
         lowResHash VARCHAR(24) NOT NULL,
         pHash TEXT NULL
     )`);

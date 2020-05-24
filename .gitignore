@@ -2,6 +2,7 @@
 dist/electron/*
 dist/web/*
 build/*
+Thumbnails/*
 Test Cases/*
 !build/icons
 node_modules/

@@ -14,7 +14,7 @@
                     <div class="checkbox-hover" v-if="media.checked" :class="showInfo ? '' : 'margin-arrows'">
                         <span><i class="fas fa-trash-alt"></i></span>
                     </div>
-                    <img v-lazy="media.path" />
+                    <img v-lazy="pathMedia(media)" />
                 </div>
             </div>
             <div class="thumb-info" v-if="showInfo">
@@ -39,6 +39,7 @@
 
 <script>
 import moment from 'moment'
+const Path = require('path');
 
 export default {
     props: ["media", "onClick", "showInfo", "onLeftClick", "onRightClick"],
@@ -48,6 +49,18 @@ export default {
         }
     },
     methods: {
+        pathMedia(media) {
+            if (media.extension === "mp4") {
+                let directory = process.env.NODE_ENV === 'development' ? Path.resolve(__dirname, "../../../Thumbnails/videos") : Path.resolve(__dirname, "../../Thumbnails/videos");
+
+                console.log(directory)
+
+                return Path.join(directory, Buffer.from(media.fileName).toString('base64') + ".png")
+            } else {
+                return media.path;
+            }
+        },
+
         formatBytes(bytes, decimals) {
             if (bytes === 0) {
                 return '0 Bytes';
