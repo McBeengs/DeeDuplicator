@@ -20,12 +20,17 @@ define(['workerpool/dist/workerpool'], function(workerpool) {
         fileId = await db.insertMedia(media);
         media.id = fileId;
 
-        ServiceObject = require(`../services/${serviceObjectName}`);
-        const service = new ServiceObject();
-        const result = await service.processMedia(media, serviceOptions);
-        if (!result) { // Something went wrong and no media was persisted
-            // await db.deleteFailedMedia(media.path);
-            db.insertMediaException(file);
+        try {
+            ServiceObject = require(`../services/${serviceObjectName}`);
+            const service = new ServiceObject();
+            const result = await service.processMedia(media, serviceOptions);
+            if (!result) { // Something went wrong and no media was persisted
+                // await db.deleteFailedMedia(media.path);
+                db.insertMediaException(file);
+                return null;
+            }
+        } catch (ex) {
+            console.error("Exception while processing media");
             return null;
         }
 

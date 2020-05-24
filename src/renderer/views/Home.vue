@@ -76,7 +76,7 @@ export default {
                 type: "setPreparedSearch",
                 preparedSearch: {
                     directories: [this.input],
-                    extensions: ["mp4", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov"]
+                    extensions: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
                 }
             });
 

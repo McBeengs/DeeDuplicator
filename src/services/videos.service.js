@@ -129,10 +129,6 @@ module.exports = class ImagesService {
             let outputPathGrid = Path.join(directory, Buffer.from(media.filename).toString('base64') + ".png");
             let outputPathGif = Path.join(directory, Buffer.from(media.filename).toString('base64') + ".gif");
 
-            if (fs.existsSync(outputPathGrid) || fs.existsSync(outputPathGif)) {
-                resolve(true);
-            }
-
             ////// This works, but it is hyper slow
             // const metadataGrid = await generatePreview({
             //     input: media.path,
@@ -144,12 +140,19 @@ module.exports = class ImagesService {
             //     // quality: 20
             // });
 
-            let mediaMetadata = await ffprobe(media.path, { path: process.env.FFPROBE_PATH });
             let metadata = undefined;
 
             try {
+                let mediaMetadata = await ffprobe(media.path, { path: process.env.FFPROBE_PATH });
+                
                 let videoMetadata = mediaMetadata.streams.filter(m => m.codec_type === "video")[0];
                 let audioMetadata = mediaMetadata.streams.filter(m => m.codec_type === "audio")[0];
+
+                if (!videoMetadata) {
+                    console.error(`No metadata could be extracted from [${media.path}]`);
+                    resolve(false);
+                    return;
+                }
 
                 metadata = {
                     width: videoMetadata.width,
@@ -158,35 +161,50 @@ module.exports = class ImagesService {
                     bitrate: videoMetadata.bit_rate,
                     framerate: videoMetadata.avg_frame_rate,
                     codec: videoMetadata.codec_name,
-                    audio: audioMetadata.codec_name
+                    audio: audioMetadata ? audioMetadata.codec_name : ""
                 };
             } catch (ex) {
+                // console.error(ex);
                 resolve(false);
+                return;
             }
 
-            let offset = 50000;
+            let offset = (metadata.duration / 1000) / 2;
+            if (isNaN(offset)) {
+                offset = 20;
+            }
 
             if (metadata) {
                 media.metadata = metadata;
             }
 
             if (serviceOptions.generateGif) {
-                fs.createWriteStream(outputPathGif);
+                if (!fs.existsSync(outputPathGif)) {
+                    fs.createWriteStream(outputPathGif);
 
-                await generatePreview({
-                    input: media.path,
-                    output: outputPathGif,
-                    numFrames: 5,
-                    gifski: {
-                        fps: 40,
-                        quality: 40,
-                        fast: true
-                    }
-                });
+                    await generatePreview({
+                        input: media.path,
+                        output: outputPathGif,
+                        numFrames: 5,
+                        gifski: {
+                            fps: 40,
+                            quality: 40,
+                            fast: true
+                        }
+                    });
+                }
             }
 
-            await exec(`cd bin && ffmpeg -i "${media.path}" -ss ${(metadata.duration / 1000) / 2} -vframes 1 "${outputPathGrid}"`,
-            { maxBuffer: 1024 * 1024 * 1024 });
+            if (!fs.existsSync(outputPathGrid)) {
+                try {
+                    const { stdout, stderr } = await exec(`cd bin && ffmpeg -ss ${offset} -i "${media.path}" -frames:v 1 "${outputPathGrid}"`,
+                    { maxBuffer: 1024 * 1024 * 1024 });
+                } catch (ex) {
+                    // console.error(ex);
+                    resolve(false);
+                    return;
+                }
+            }
 
             // await extractFrame({
             //     input: media.path,
@@ -198,11 +216,11 @@ module.exports = class ImagesService {
 
             if (!fs.existsSync(outputPathGrid)) {
                 resolve(false);
+                return;
             }
 
-            let data = await Hashes.calcImage_pHash(outputPathGrid);
-            
             try {
+                let data = await Hashes.calcImage_pHash(outputPathGrid);
                 let image = await Jimp.read(outputPathGrid);
 
                 const size = 64;
@@ -226,8 +244,8 @@ module.exports = class ImagesService {
                 const idInserted = await db.insertVideo(media);
                 resolve(true);
             } catch (err) {
-                console.log(err);
-                // console.error(`Error while getting low res hash of file [${outputPathGrid}]. Jimp was used but failed. The file will have to be ignored.`);
+                // console.log(err);
+                console.error(`Error while getting low res hash of file [${outputPathGrid}]. Jimp was used but failed. The file will have to be ignored.`);
                 reject(err);
             }
         })
@@ -244,22 +262,6 @@ module.exports = class ImagesService {
     }
 
     compareMedia(mediaA, mediaB, comparator) {
-        // const binaryLowResHashA = Number(mediaA.lowResHash); // (mediaA.lowResHash >>> 0).toString(2);
-        // const binaryLowResHashB = Number(mediaB.lowResHash); // (mediaB.lowResHash >>> 0).toString(2);
-
-        // // Two lineart with faint lines and no color could be mistaken as "empty" since the lowResHash might be zero. But very dark images can be the opposite as in
-        // // everything would be black. As such, everything 0 or 4096 must be compared
-        // let percDiff = 0;
-        // if ((binaryLowResHashA > 0 && binaryLowResHashB > 0) && (binaryLowResHashA < 4096 && binaryLowResHashB < 4096)) {
-        //     // Get the difference between the two hashes. If above 100% then it most likely isn't a duplicate, so let it be ignored.
-        //     percDiff = Math.abs((binaryLowResHashA - binaryLowResHashB) / ( (binaryLowResHashA + binaryLowResHashB) / 2 ));
-            
-        //     if (percDiff > 1) {
-        //         // console.log("Ignored with lowResHash diferrence too big to be relevant " + percDiff.toFixed(2))
-        //         return 0.0;
-        //     }
-        // }
-
         let sizeOfComparison = 64;
 
         let firstCharsMediaA = mediaA.pHash.substring(0, sizeOfComparison);
