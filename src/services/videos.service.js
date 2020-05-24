@@ -4,6 +4,8 @@ const Path = require('path');
 const generatePreview = require('ffmpeg-generate-video-preview')
 const extractFrame = require('ffmpeg-extract-frame');
 const ffprobe = require('ffprobe');
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 const imghash = require('imghash');
 const Jimp = require("jimp");
 //------------------------------------------------------------------
@@ -158,13 +160,13 @@ module.exports = class ImagesService {
                     codec: videoMetadata.codec_name,
                     audio: audioMetadata.codec_name
                 };
-            } catch (ex) { }
+            } catch (ex) {
+                resolve(false);
+            }
 
             let offset = 50000;
 
             if (metadata) {
-                offset = Math.floor(metadata.duration / 2);
-                // console.log(`${metadata.duration} | ${offset}`);
                 media.metadata = metadata;
             }
 
@@ -183,13 +185,16 @@ module.exports = class ImagesService {
                 });
             }
 
-            await extractFrame({
-                input: media.path,
-                output: outputPathGrid,
-                offset: offset,
-                width: 640,
-                height: 480
-            });
+            await exec(`cd bin && ffmpeg -i "${media.path}" -ss ${(metadata.duration / 1000) / 2} -vframes 1 "${outputPathGrid}"`,
+            { maxBuffer: 1024 * 1024 * 1024 });
+
+            // await extractFrame({
+            //     input: media.path,
+            //     output: outputPathGrid,
+            //     offset: offset,
+            //     width: 640,
+            //     height: 480
+            // });
 
             if (!fs.existsSync(outputPathGrid)) {
                 resolve(false);
