@@ -35,7 +35,7 @@ const extensions = process.argv[3];
 
 const comparator = "lsh";
 const differenceAlgorithm = "hamming";
-const threshold = 0.70;
+const threshold = 0.90;
 const serviceOptions = {
     generateGifs: false
 };
@@ -48,6 +48,7 @@ const processFilesPool = workerpool.pool(path.resolve(__dirname, "./processFile.
 
 let comparatorPool;
 let serviceObjectName = undefined;
+let idsMediasProcessed = [];
 
 function entryPoint() {
     try {
@@ -89,7 +90,14 @@ function entryPoint() {
                 // If no new file was founded, we can assume that everything has already been compared
                 if (tempFilesSize <= 0 && skipWhenNoNewFiles) {
                     console.log("No new files were founded on the path informed and its subdirectories. Skipping comparison.");
-                    const allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, idsMediasProcessed);
+                    let allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, []);
+                    let extensions = mediaTable.filter(m => m.service === serviceObjectName)[0].extensions;
+                    console.log(allDupes.length)
+                    allDupes = allDupes.filter(dupe => {
+                        return extensions.includes(dupe[0].extension);
+                    });
+                    console.log(allDupes.length)
+                    db.insertAllDuplicatesFound(allDupes);
                     process.send({
                         event: "processFinished", data: allDupes
                     });
@@ -110,7 +118,6 @@ entryPoint();
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let mediaToCompare = [];
-let idsMediasProcessed = [];
 let pendingTasks = 0;
 let pendingTasksCount = 0;
 
@@ -151,12 +158,12 @@ function processFilesChunk() {
             pendingTasksCount = 0;
         }
 
-        if (processFilesPool.stats().pendingTasks <= 0 || pendingTasksCount > 15) {
+        if (processFilesPool.stats().pendingTasks <= 0 || (pendingTasksCount > 15 && serviceObjectName === "videos.service")) {
             if (pendingTasksCount > 15) {
                 console.log("Workerpool forcefully terminated due to inactivity");
             }
 
-            processFilesPool.terminate(pendingTasksCount > 15).then(() => {
+            processFilesPool.terminate((pendingTasksCount > 15 && serviceObjectName === "videos.service")).then(() => {
                 pendingTasksCount = 0;
                 pendingTasks = 0;
                 clearInterval(workerChecker);
@@ -361,26 +368,36 @@ function processLshAlgorithmChunk() {
 
 async function getAllFilesRecursively(base, ext = ['*'], files) {
     try {
-        files = files || fs.readdirSync(base);
+        try {
+            files = files || fs.readdirSync(base);
+        } catch (ex) { }
 
         for (let index = 0; index < files.length; index++) {
             const file = files[index];
 
             var newbase = path.join(base, file)
-            if (fs.statSync(newbase).isDirectory()) {
+            let isDirectory = false;
+
+            try {
+                isDirectory = fs.statSync(newbase).isDirectory();
+            } catch (ex) { }
+
+            if (isDirectory) {
                 await getAllFilesRecursively(newbase, ext, fs.readdirSync(newbase))
             }
             else {
-                const extension = file.substr(file.lastIndexOf(".") + 1);
+                try {
+                    const extension = file.substr(file.lastIndexOf(".") + 1);
 
-                if (ext.includes(extension)) {
-                    await db.insertTempFile(newbase);
+                    if (ext.includes(extension)) {
+                        await db.insertTempFile(newbase);
 
-                    process.send({
-                        event: "fileFounded",
-                        data: newbase
-                    })
-                }
+                        process.send({
+                            event: "fileFounded",
+                            data: newbase
+                        })
+                    }
+                } catch (ex) { }
             }
         }
 

@@ -25,13 +25,14 @@
             </div>
             <div class="col-md-4 col-lg-3 col-xl-2">
                 <div class="card pills-container" v-bar>
-                    <div class="card-body">
+                    <div class="card-body" ref="pillsContainer">
                         <div class="pill-container" v-for="(media, index) in currentGroup" v-bind:key="index">
                             <media-pill 
                                 :media="media" 
-                                :onClick="onPillClick"
-                                :onLeftClick="leftClick" 
-                                :onRightClick="rightClick">
+                                @onLeftClick="leftClick" 
+                                @onRightClick="rightClick"
+                                @onCardClick="onPillClick"
+                                :key="key">
                             </media-pill>
                         </div>
                     </div>
@@ -44,7 +45,7 @@
             </button>
 
             <b-button-group size="sm" class="mt-3">
-                <b-button variant="success" @click="mediaLeft.checked = !mediaLeft.checked">
+                <b-button variant="success" @click="mediaLeft.checked = !mediaLeft.checked; key++">
                     <span><i class="fas fa-arrow-left"></i></span>
                     <span><i class="fas fa-trash-alt"></i></span>
                     Delete left
@@ -58,7 +59,7 @@
                     <span><i class="fas fa-retweet"></i></span>
                     Swap filenames
                 </b-button>
-                <b-button variant="info" @click="mediaRight.checked = !mediaRight.checked">
+                <b-button variant="info" @click="mediaRight.checked = !mediaRight.checked; key++">
                     Delete right
                     <span><i class="fas fa-trash-alt"></i></span>
                     <span><i class="fas fa-arrow-right"></i></span>
@@ -92,7 +93,8 @@ export default {
             currentGroup: {},
 
             mediaLeft: {},
-            mediaRight: {}
+            mediaRight: {},
+            key: 0
         }
     },
     beforeMount() {
@@ -136,25 +138,27 @@ export default {
                 this.mediaLeft = this.currentGroup[0];
                 this.mediaRight = this.currentGroup[1]
             }
+
+            this.$refs.pillsContainer.scrollTop = 0;
         },
         previousGroupClick() {
             if (this.duplicateGroups.length > 0) {
                 this.currentGroupIndex--;
                 this.currentGroup = this.duplicateGroups[this.currentGroupIndex];
                 this.mediaLeft = this.currentGroup[0];
-                this.mediaRight = this.currentGroup[1]
+                this.mediaRight = this.currentGroup[1];
             }
+
+            this.$refs.pillsContainer.scrollTop = 0;
         },
         onPillClick(media) {
             media.checked = !media.checked;
         },
         leftClick(media) {
             this.mediaLeft = media;
-            this.mediaLeft.checked = !this.mediaLeft.checked;
         },
         rightClick(media) {
             this.mediaRight = media;
-            this.mediaRight.checked = !this.mediaRight.checked;
         },
         switchDirectories() {
             if (this.duplicateGroups.length > 0) {

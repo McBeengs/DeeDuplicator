@@ -21,3 +21,12 @@
 @import "app/inputs";
 
 // @import "darkreader-extracted.scss";
+
+body {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}

@@ -1,7 +1,7 @@
 <template>
     <div class="image-card-wrapper">
         <div class="image-container">
-            <img v-lazy="media.path" />
+            <img v-lazy="pathMedia(media)" />
         </div>
         <div class="info-container" v-bar>
             <div>
@@ -35,17 +35,24 @@
 <script>
 import moment from 'moment';
 const shell = require('electron').shell;
+const Path = require('path');
 
 export default {
     props: ["media"],
     data() {
         return {
-
+            videos: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
         }
     },
     methods: {
-        openFile() {
-            console.log(this.media.path);
+        pathMedia(media) {
+            if (this.videos.includes(media.extension)) {
+                let directory = process.env.NODE_ENV === 'development' ? Path.resolve(__dirname, "../../../../Thumbnails/videos") : Path.resolve(__dirname, "../../Thumbnails/videos");
+
+                return Path.join(directory, Buffer.from(media.path).toString('base64') + ".png")
+            } else {
+                return media.path;
+            }
         },
         formatBytes(bytes, decimals) {
             if (bytes === 0) {

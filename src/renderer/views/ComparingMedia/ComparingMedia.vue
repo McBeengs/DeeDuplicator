@@ -91,6 +91,7 @@ export default {
                     type: "setDuplicates",
                     duplicates: this.duplicateGroups
                 });
+                this.duplicateGroups = this.$store.getters.getDuplicates;
             }
         },
 
@@ -118,7 +119,6 @@ export default {
                     this.viewActive = "eachGroup";
                     break;
                 case "customRule":
-
                     break;
 
                 case "fa":
@@ -231,25 +231,23 @@ export default {
 
                     if (
                         prev.path.indexOf("\\Sort\\") > 0 ||
-                        prev.path.indexOf("\\Downloads\\") > 0 ||
-                        prev.path.indexOf("\\StufferDB\\") > 0
+                        prev.path.indexOf("\\Downloads\\") > 0
                     ) {
                         prev.checked = true;
                     }
 
                     if (
                         current.path.indexOf("\\Sort\\") > 0 ||
-                        current.path.indexOf("\\Downloads\\") > 0 ||
-                        current.path.indexOf("\\StufferDB\\") > 0
+                        current.path.indexOf("\\Downloads\\") > 0
                     ) {
                         current.checked = true;
                     }
 
-                    if (prev.size > current.size) {
-                        current.checked = true;
-                    } else {
-                        prev.checked = true;
-                    }
+                    // if (prev.size > current.size) {
+                    //     current.checked = true;
+                    // } else {
+                    //     prev.checked = true;
+                    // }
                 });
             }
             this.$store.dispatch({

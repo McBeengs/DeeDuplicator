@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" v-bar>
     
     <router-view class="darkreader"></router-view>
   </div>

@@ -1,12 +1,12 @@
 <template>
-    <div class="card media-pill-wrapper" @click="onCardClick">
+    <div class="card media-pill-wrapper" @click="onCardClick" :key="key">
         <div class="card-body" :class="showInfo ? 'hover' : ''">
             <div class="thumb-wrapper">
                 <div class="arrows-comparator" v-if="!showInfo">
-                    <b-button variant="success" @click="onLeftClick(media)" size="sm">
+                    <b-button variant="success" @click="onLeftClick" size="sm">
                         <span><i class="fas fa-arrow-left"></i></span>
                     </b-button>
-                    <b-button variant="info" @click="onRightClick(media)" size="sm" style="float: right">
+                    <b-button variant="info" @click="onRightClick" size="sm" style="float: right">
                         <span><i class="fas fa-arrow-right"></i></span>
                     </b-button>
                 </div>
@@ -21,6 +21,10 @@
                 <div class="thumb-info-value">
                     <h6 class="d-inline">Name: </h6>
                     <p class="d-inline">{{media.fileName}}</p>
+                </div>
+                <div class="thumb-info-value">
+                    <h6 class="d-inline">Path: </h6>
+                    <p class="d-inline">{{media.path}}</p>
                 </div>
                 <div class="thumb-info-value">
                     <h6 class="d-inline">Date: </h6>
@@ -42,20 +46,21 @@ import moment from 'moment'
 const Path = require('path');
 
 export default {
-    props: ["media", "onClick", "showInfo", "onLeftClick", "onRightClick"],
+    props: ["media", "showInfo"],
     data() {
         return {
-            videos: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
+            videos: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"],
+            key: 0
         }
     },
     methods: {
         pathMedia(media) {
-            if (this.videos.indexOf(media.extension) > 0) {
+            if (this.videos.includes(media.extension)) {
                 let directory = process.env.NODE_ENV === 'development' ? Path.resolve(__dirname, "../../../Thumbnails/videos") : Path.resolve(__dirname, "../../Thumbnails/videos");
 
-                console.log(directory)
+                // console.log(directory)
 
-                return Path.join(directory, Buffer.from(media.fileName).toString('base64') + ".png")
+                return Path.join(directory, Buffer.from(media.path).toString('base64') + ".png")
             } else {
                 return media.path;
             }
@@ -79,9 +84,21 @@ export default {
         },
 
         onCardClick() {
-            if (this.onClick != undefined) {
-                this.onClick(this.media);
-            }
+            this.media.checked = !this.media.checked;
+            this.$emit("onCardClick", this.media);
+            this.key++;
+        },
+
+        onLeftClick() {
+            this.media.checked = !this.media.checked;
+            this.$emit("onLeftClick", this.media);
+            this.key++;
+        },
+
+        onRightClick() {
+            this.media.checked = !this.media.checked;
+            this.$emit("onRightClick", this.media);
+            this.key++;
         }
     }
 }

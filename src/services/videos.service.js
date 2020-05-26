@@ -126,8 +126,8 @@ module.exports = class ImagesService {
 
     processMedia(media, serviceOptions) {
         return new Promise(async (resolve, reject) => {
-            let outputPathGrid = Path.join(directory, Buffer.from(media.filename).toString('base64') + ".png");
-            let outputPathGif = Path.join(directory, Buffer.from(media.filename).toString('base64') + ".gif");
+            let outputPathGrid = Path.join(directory, Buffer.from(media.path).toString('base64') + ".png");
+            let outputPathGif = Path.join(directory, Buffer.from(media.path).toString('base64') + ".gif");
 
             ////// This works, but it is hyper slow
             // const metadataGrid = await generatePreview({
@@ -223,7 +223,7 @@ module.exports = class ImagesService {
                 let data = await Hashes.calcImage_pHash(outputPathGrid);
                 let image = await Jimp.read(outputPathGrid);
 
-                const size = 64;
+                const size = 256;
                 image
                     .resize(size, size)
                     .grayscale().contrast(1); // make pure black and white pixels, no gray
@@ -262,37 +262,37 @@ module.exports = class ImagesService {
     }
 
     compareMedia(mediaA, mediaB, comparator) {
-        let sizeOfComparison = 64;
+        // let sizeOfComparison = 64;
 
-        let firstCharsMediaA = mediaA.pHash.substring(0, sizeOfComparison);
-        let firstCharsMediaB = mediaB.pHash.substring(0, sizeOfComparison);
-        let difference = false;
+        // let firstCharsMediaA = mediaA.pHash.substring(0, sizeOfComparison);
+        // let firstCharsMediaB = mediaB.pHash.substring(0, sizeOfComparison);
+        // let difference = false;
 
-        for (let i = 0; i < firstCharsMediaA.length; i++) {
-            if (firstCharsMediaA[i] !== firstCharsMediaB[i]) {
-                difference = true;
-                break;
-            }
-        }
+        // for (let i = 0; i < firstCharsMediaA.length; i++) {
+        //     if (firstCharsMediaA[i] !== firstCharsMediaB[i]) {
+        //         difference = true;
+        //         break;
+        //     }
+        // }
 
-        if (difference) {
-            return 0.0;
-        }
+        // if (difference) {
+        //     return 0.0;
+        // }
 
-        let lastCharsMediaA = mediaA.pHash.substring(mediaA.length / 2 - sizeOfComparison, sizeOfComparison);
-        let lastCharsMediaB = mediaB.pHash.substring(mediaB.length / 2 - sizeOfComparison, sizeOfComparison);
-        difference = false;
+        // let lastCharsMediaA = mediaA.pHash.substring(mediaA.length / 2 - sizeOfComparison, sizeOfComparison);
+        // let lastCharsMediaB = mediaB.pHash.substring(mediaB.length / 2 - sizeOfComparison, sizeOfComparison);
+        // difference = false;
 
-        for (let i = 0; i < lastCharsMediaA.length; i++) {
-            if (lastCharsMediaA[i] !== lastCharsMediaB[i]) {
-                difference = true;
-                break;
-            }
-        }
+        // for (let i = 0; i < lastCharsMediaA.length; i++) {
+        //     if (lastCharsMediaA[i] !== lastCharsMediaB[i]) {
+        //         difference = true;
+        //         break;
+        //     }
+        // }
 
-        if (difference) {
-            return 0.0;
-        }
+        // if (difference) {
+        //     return 0.0;
+        // }
 
         const pHashImageA = mediaA.pHash;
         const pHashImageB = mediaB.pHash;

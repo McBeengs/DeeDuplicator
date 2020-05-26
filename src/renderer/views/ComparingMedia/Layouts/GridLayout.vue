@@ -76,7 +76,6 @@ export default {
     },
     beforeMount() {
         this.calculateSelectedMedias();
-        console.log(this.$store.state);
     },
     methods: {
         calculateSelectedMedias() {

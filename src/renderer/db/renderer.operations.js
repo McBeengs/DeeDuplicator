@@ -125,10 +125,11 @@ export default class RendererOperations {
                 separator = ","
             }
 
-            db.execute(`DELETE FROM media WHERE id IN (${values})`);
-            db.execute(`DELETE FROM metadata WHERE idMedia IN (${values})`);
-            db.execute(`DELETE FROM comparison WHERE idMedia IN (${values})`);
+            db.execute(`DELETE FROM comparison WHERE a IN (${values})`);
+            db.execute(`DELETE FROM comparison WHERE b IN (${values})`);
             db.execute(`DELETE FROM image WHERE idMedia IN (${values})`);
+            db.execute(`DELETE FROM video WHERE idMedia IN (${values})`);
+            db.execute(`DELETE FROM media WHERE id IN (${values})`);
 
             return true;
         } catch (ex) {

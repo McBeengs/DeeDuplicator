@@ -50,6 +50,9 @@ import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
 import moment from 'moment'
 import trash from 'trash'
 const shell = require('electron').shell;
+const Path = require('path');
+import RendererOperations from '../../db/renderer.operations'
+const db = new RendererOperations();
 
 import * as fs from 'fs'
 
@@ -155,14 +158,21 @@ export default {
                 });
             } else {
                 this.tableItems.forEach((file) => {
-                    fs.unlinkSync(file.path);
+                    try {
+                        fs.unlinkSync(file.path);
 
-                    this.$store.dispatch({
-                        type: "removeItem",
-                        item: file
-                    });
+                        this.$store.dispatch({
+                            type: "removeItem",
+                            item: file
+                        });
+
+                        let directory = process.env.NODE_ENV === 'development' ? Path.resolve(__dirname, "../../../Thumbnails/videos") : Path.resolve(__dirname, "../../Thumbnails/videos");
+                        fs.unlinkSync(Path.join(directory, Buffer.from(file.path).toString('base64') + ".png"));
+                    } catch (ex) {  }
                 });
             }
+
+            db.deleteFiles(paths);
 
             this.$refs.modalConfirmDelete.close();
             this.$refs.modalFilesDeleted.open();

@@ -269,7 +269,12 @@ module.exports = class MediaOperations {
                 }
             }
 
-            let query = `SELECT a, b FROM comparison WHERE ${algorithm} >= ? AND whitelisted IS null AND a IN (${values}) AND b IN (${values}) ORDER BY a ASC`;
+            let query = "";
+            if (values) {
+                query = `SELECT a, b FROM comparison WHERE ${algorithm} >= ? AND whitelisted IS null AND a IN (${values}) AND b IN (${values}) ORDER BY a ASC`;
+            } else {
+                query = `SELECT a, b FROM comparison WHERE ${algorithm} >= ? AND whitelisted IS null ORDER BY a ASC`;
+            }
             let result = db.query(query, threshold);
 
             if (!result.length || result.length <= 0) {
@@ -310,10 +315,15 @@ module.exports = class MediaOperations {
                     for (let j = 0; j < idGroup.length; j++) {
                         let media = this.getMediaById(idGroup[j]);
                         media.checked = false;
-                        group.push(media);
+
+                        if (group.filter(m => { return m.id === media.id }).length <= 0) {
+                            group.push(media);
+                        }
                     }
 
-                    mediaGroups.push(group);
+                    if (group.length > 1) {
+                        mediaGroups.push(group);
+                    }
                 }
 
                 return mediaGroups;

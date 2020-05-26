@@ -31,7 +31,7 @@ const ipcMain = electron.remote.ipcMain;
 export default {
     data() {
         return {
-            input: '\\\\THEONETOYETBENA\\The Vault\\Artwork & Comics\\FurAffinity'
+            input: 'D:\\The Vault\\Real\\WG & Feedee & SSBBW\\BBW-Chan\\3Darlings'
         };
     },
     methods: {
@@ -73,12 +73,13 @@ export default {
             });
 
             // ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
+            // ["png", "jpg", "jpeg", "gif"]
 
             this.$store.dispatch({
                 type: "setPreparedSearch",
                 preparedSearch: {
                     directories: [this.input],
-                    extensions: ["png", "jpg", "jpeg", "gif"]
+                    extensions: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
                 }
             });
 
