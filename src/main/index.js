@@ -28,11 +28,17 @@ const ffprobeDirectory = process.env.NODE_ENV === 'development' ?
 
 const gifskiDirectory = process.env.NODE_ENV === 'development' ?
   Path.resolve(__dirname, "../../bin/gifski.exe") : Path.resolve(__dirname, "../../../../bin/gifski.exe");
+
+const thumbnailsDirectory = process.env.NODE_ENV === 'development' ?
+  Path.resolve(__dirname, "../../Thumbnails") : Path.resolve(__dirname, "../../../../Thumbnails");
   
 
 process.env.FFMPEG_PATH = ffmpegDirectory;
 process.env.FFPROBE_PATH = ffprobeDirectory;
 process.env.GIFSKI_PATH = gifskiDirectory;
+process.env.THUMBNAILS_PATH = thumbnailsDirectory;
+
+console.log(process.env.THUMBNAILS_PATH);
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development' ? `http://localhost:9080` : `file://${__dirname}/index.html`

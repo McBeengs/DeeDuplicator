@@ -74,6 +74,8 @@ export function initIpcListeners() {
                         }
                     }
                 } catch (ex) {
+                    console.error(`Exception inside childProcess [${file}]. The process has been killed.`);
+                    console.error(ex);
                     childProcess.kill();
                 }
             });
@@ -87,7 +89,6 @@ export function initIpcListeners() {
             }
         } catch (ex) {
             console.error("Error while running new worker", ex);
-            log.error("Error while running new worker", ex);
         }
     });
 }

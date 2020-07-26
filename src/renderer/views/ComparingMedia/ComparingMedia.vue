@@ -242,13 +242,62 @@ export default {
                     ) {
                         current.checked = true;
                     }
-
-                    // if (prev.size > current.size) {
-                    //     current.checked = true;
-                    // } else {
-                    //     prev.checked = true;
-                    // }
                 });
+
+                // for (let i = 0; i < group.length; i++) {}
+
+                if (group.length === 2) {
+                    let a = group[0];
+                    let b = group[1];
+
+                    a.checked = false;
+                    b.checked = false;
+
+                    if (
+                        a.path.indexOf("\\Sort\\") > 0 ||
+                        a.path.indexOf("\\Downloads\\") > 0 || 
+                        a.path.indexOf("\\Misc") > 0
+                    ) {
+                        if (a.size > b.size) {
+                            b.checked = true;
+                        } else {
+                            a.checked = true;
+                        }
+                    }
+
+                    if (
+                        b.path.indexOf("\\Sort\\") > 0 ||
+                        b.path.indexOf("\\Downloads\\") > 0 ||
+                        b.path.indexOf("\\Misc") > 0
+                    ) {
+                        if (b.size > a.size) {
+                            a.checked = true;
+                        } else {
+                            b.checked = true;
+                        }
+                    }
+
+                    let absPathA = a.path.substring(0, a.path.lastIndexOf("\\"));
+                    let absPathB = b.path.substring(0, b.path.lastIndexOf("\\"));
+
+                    if (absPathA === absPathB) {
+                        if (a.size > b.size) {
+                            b.checked = true;
+                        } else {
+                            a.checked = true;
+                        }
+                    } else {
+                        if ((a.path.indexOf("BBW-Chan") <= 0) && b.path.indexOf("BBW-Chan") > 0) {
+                            a.checked = true
+                            b.checked = false
+                        }
+
+                        if ((b.path.indexOf("BBW-Chan") <= 0) && a.path.indexOf("BBW-Chan") > 0) {
+                            b.checked = true
+                            a.checked = false
+                        }
+                    }
+                }
             }
             this.$store.dispatch({
                 type: "setRefreshDuplicateGroups",

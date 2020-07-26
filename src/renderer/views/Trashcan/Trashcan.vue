@@ -172,6 +172,11 @@ export default {
                 });
             }
 
+            this.$store.dispatch({
+                type: "setTrash",
+                trash: []
+            });
+
             db.deleteFiles(paths);
 
             this.$refs.modalConfirmDelete.close();
