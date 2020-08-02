@@ -322,9 +322,43 @@ module.exports = class MediaOperations {
                     }
 
                     if (group.length > 1) {
-                        mediaGroups.push(group);
+                        // Sometimes due to similar comparisons that have a slightly diff. being added to groups, things can snowball out of control
+                        // where a group can have 100+ medias that doesn't are equal at all just because a file was similar enough to another, that was
+                        // similar to another, and another... and so on. This failsafe gets unusual large groups and check them again just to be sure
+                        if (group.length > 10) {
+                            try {
+                                let ServiceObject = require(`../services/${serviceObjectName}`);
+                                const service = new ServiceObject();
+                                
+                                let newGroup = [];
+
+                                for (let x = 0; x < group.length; x++) {
+                                    const elementX = array[x];
+                                    
+                                    for (let y = 0; y < group.length; y++) {
+                                        const elementY = group[y];
+                                        
+                                        if (elementX.id === elementY.id) {
+                                            continue;
+                                        }
+
+                                        let distance = service.compareMedia(service.getMedia(elementX.id), service.getMedia(elementY.id), "hamming");
+                                        if (distance >= 0.75) {
+                                            newGroup.push(elementY);
+                                        }
+                                    }
+                                }
+
+                                console.log(`Group too big has broken from ${group.length} to ${newGroup.length}`);
+                                mediaGroups.push(newGroup);
+                            } catch (ex) {}
+                        } else {
+                            mediaGroups.push(group);
+                        }
                     }
                 }
+
+
 
                 return mediaGroups;
             }

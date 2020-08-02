@@ -73,11 +73,12 @@ function entryPoint() {
         }
 
         if (!serviceObjectName) {
-            console.error("No service was found for the extensions informed. Aborting worker.");
-            process.send({
-                event: "processFinished", data: []
-            });
-            return;
+            console.error("No service was found for the extensions informed. Using generic comparator.");
+            serviceObjectName = "generic.service";
+            // process.send({
+            //     event: "processFinished", data: []
+            // });
+            // return;
         }
 
         getAllFilesRecursively(rootPath, extensions).then((success) => {
