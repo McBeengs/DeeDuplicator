@@ -18,7 +18,7 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
                 return;
             }
 
-            const distance = service.compareMedia(fileBeingCompared, fileToCompare, differenceAlgorithm);
+            const distance = await service.compareMedia(fileBeingCompared, fileToCompare, differenceAlgorithm);
             if (distance >= threshold) {
                 dupesFound.push({ 
                     idMediaA: fileBeingCompared.id, 

@@ -31,7 +31,7 @@ const ipcMain = electron.remote.ipcMain;
 export default {
     data() {
         return {
-            input: 'D:\\The Vault\\Real\\WG & Feedee & SSBBW\\BBW-Chan\\3Darlings'
+            input: '\\\\THEONETOYETBENA\\Roms\\Nintendo - Super Nintento Entertainment System (SNES)'
         };
     },
     methods: {
@@ -74,12 +74,13 @@ export default {
 
             // ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
             // ["png", "jpg", "jpeg", "gif"]
+            // ["zip", "rar"]
 
             this.$store.dispatch({
                 type: "setPreparedSearch",
                 preparedSearch: {
                     directories: [this.input],
-                    extensions: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
+                    extensions: ["zip", "rar"]
                 }
             });
 

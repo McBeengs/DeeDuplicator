@@ -70,6 +70,7 @@
     "jimp": "^0.9.3",
     "js-levenshtein": "^1.1.6",
     "lodash": "^4.17.15",
+    "md5-file": "^5.0.0",
     "moment": "^2.24.0",
     "regenerator-runtime": "^0.13.3",
     "string-similarity": "^4.0.1",
