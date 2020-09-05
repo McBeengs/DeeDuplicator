@@ -41,7 +41,9 @@ export default {
     props: ["media"],
     methods: {
         pathMedia(media) {
-            return media.path;
+            let directory = process.env.NODE_ENV === 'development' ? Path.resolve(__dirname, "../../../../Thumbnails/videos") : Path.resolve(__dirname, "../../Thumbnails/videos");
+
+                return Path.join(directory, Buffer.from(media.path).toString('base64') + ".png")
         },
         formatBytes(bytes, decimals) {
             if (bytes === 0) {
@@ -56,15 +58,11 @@ export default {
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         },
         formatDate(date) {
-            return date === '' ? "Not Available" : moment(new Date(date)).format("YYYY/MM/DD HH:mm:ss");
+            return date === '' ? "Not Available" : moment(new Date(date)).format("YYYY/MM/DD");
         },
         openFile() {
-            console.log(this.media)
             shell.openItem(this.media.path);
         },
-        highlightInfos() {
-
-        }
     }
 }
 </script>

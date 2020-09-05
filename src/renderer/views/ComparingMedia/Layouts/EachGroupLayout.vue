@@ -7,7 +7,7 @@
                         <div class="card h-100 left-card">
                             <div class="card-body h-100">
                                 <div class="media-card-container">
-                                    <image-card :media="mediaLeft"></image-card>
+                                    <generic-card :media="mediaLeft"></generic-card>
                                 </div>
                             </div>
                         </div>
@@ -16,7 +16,7 @@
                         <div class="card h-100 right-card">
                             <div class="card-body h-100">
                                 <div class="media-card-container">
-                                    <image-card :media="mediaRight"></image-card>
+                                    <generic-card :media="mediaRight"></generic-card>
                                 </div>
                             </div>
                         </div>
@@ -75,7 +75,7 @@
 
 <script>
 import MediaPill from '../../../components/MediaPill.vue'
-import ImageCard from '../../../components/EachGroupLayout/ImageCard.vue'
+import GenericCard from '../../../components/EachGroupLayout/GenericCard.vue'
 import RendererOperations from '../../../db/renderer.operations'
 const db = new RendererOperations();
 
@@ -84,7 +84,7 @@ import * as fs from 'fs'
 export default {
     components: {
         MediaPill,
-        ImageCard
+        GenericCard
     },
     props: ["duplicateGroups", "openWithGroup"],
     data() {

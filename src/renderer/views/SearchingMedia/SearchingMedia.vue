@@ -96,7 +96,7 @@ export default {
             // TODO: deal with directory array
             ipcMain.emit("runWorker", {
                 file: `mediaIterator.worker.js`,
-                params: [preparedSearch.directories[0], preparedSearch.extensions],
+                params: [preparedSearch.directories, preparedSearch.excludedDirectories, preparedSearch.extensions],
                 listeners: {
                     fileFounded: (filePath) => {
                         this.message = `Iterating folders... Found file ${filePath}`;

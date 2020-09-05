@@ -15,6 +15,7 @@
 // Import Main styles for this application
 @import '@/styles/bootstrap.scss';
 @import '@/styles/app.scss';
+@import "vue-multiselect-listbox/src/scss/vue-multi-select-listbox.scss";
 
 // important for the "EachGroup.vue"
 html, body, #app {

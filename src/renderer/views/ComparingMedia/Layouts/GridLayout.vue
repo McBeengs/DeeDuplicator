@@ -159,7 +159,6 @@ export default {
             this.totalFilesSelected = 0;
             this.totalBytesSelected= 0;
             this.calculateSelectedMedias();
-
         }
     }
 }

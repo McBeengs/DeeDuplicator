@@ -1,13 +1,25 @@
 <template>
     <div class="wrapper section-container">
-        <div class="row">
-            <div class="col-6">
-                <div class="card">
-                    <div class="card-body">
-                        <input type="text" class="form-control" v-model="input">
-                        <button @click="selectDirectory()">click me!</button>
-                        <button @click="clearCache()">Clear Cache</button>
-                        <button @click="openTrashcan()">See trashcan</button>
+        <div class="card">
+            <div class="card-body">
+                <div class="buttons">
+                    <button class="btn btn-primary" @click="selectDirectory()">Add directory</button>
+                    <button class="btn btn-primary" @click="openTrashcan()">See trashcan</button>
+                    <button class="btn btn-danger" @click="clearCache()">Clear Cache</button>
+                    <button class="btn btn-success" @click="start()">click me!</button>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col-6">
+                        <h3>Folders to include</h3>
+                    </div>
+                    <div class="col-6">
+                        <h3>Folders to exclude</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <v-multiselect-listbox :options="listBoxesOptions" v-model="selectedListBoxedOptions"></v-multiselect-listbox>
                     </div>
                 </div>
             </div>
@@ -24,25 +36,32 @@
 </template>
 
 <script>
+import vMultiselectListbox from 'vue-multiselect-listbox';
+
+
 const electron = require("electron");
 const BrowserWindow = electron.remote.BrowserWindow;
 const ipcMain = electron.remote.ipcMain;
 
 export default {
+    components: {
+        "v-multiselect-listbox" : vMultiselectListbox
+    },
     data() {
         return {
-            input: 'D:\\The Vault\\Real\\WG & Feedee & SSBBW\\BBW-Chan\\3Darlings'
+            listBoxesOptions: ["D:\\The Vault", "E:\\", "F:\\Torrents"],
+            selectedListBoxedOptions: []
         };
     },
     methods: {
         selectDirectory() {
-            //   electron.remote.dialog.showOpenDialog(
-            //     { properties: ["openDirectory"] },
-            //     directories => {
-                
-            //     }
-            //   );
+            electron.remote.dialog.showOpenDialog({ properties: ["openDirectory"] }, (directories) => {
+                this.listBoxesOptions.push(...directories);
+                this.listBoxesOptions = Array.from(new Set(this.listBoxesOptions));
+            });
+        },
 
+        start() {
             if (this.$store.getters.checkIfHasComparisonUnfinished) {
                 this.$refs.modalComparisonInProgress.open();
             } else {
@@ -60,6 +79,8 @@ export default {
                 type: "setTrash",
                 trash: []
             });
+
+            console.log(this.listBoxesOptions);
         },
 
         openTrashcan() {
@@ -78,7 +99,8 @@ export default {
             this.$store.dispatch({
                 type: "setPreparedSearch",
                 preparedSearch: {
-                    directories: [this.input],
+                    directories: [...this.listBoxesOptions],
+                    excludedDirectories: [...this.selectedListBoxedOptions],
                     extensions: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
                 }
             });
@@ -97,23 +119,16 @@ export default {
 </script>
 
 <style lang="scss">
-.vtl {
-    .vtl-drag-disabled {
-        background-color: #d0cfcf;
-        &:hover {
-        background-color: #d0cfcf;
-        }
-    }
-    .vtl-disabled {
-        background-color: #d0cfcf;
-    }
+input.msl-search-list-input {
+    display: none;
 }
-</style>
 
-<style  lang="scss" scoped>
-.icon {
-  &:hover {
-    cursor: pointer;
-  }
+.msl-multi-select {
+    width: 100%;
+}
+
+.msl-searchable-list__items {
+    width: 100%;
+    min-width: 300px;
 }
 </style>

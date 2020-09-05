@@ -2,6 +2,7 @@ const PreparedSearch = {
     state: {
         preparedSearch: {
             directories: [],
+            excludedDirectories: [],
             extensions: []
         }
     },

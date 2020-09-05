@@ -30,8 +30,9 @@ let service;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Start of worker
-const rootPath = process.argv[2];
-const extensions = process.argv[3];
+const directoriesToSearch = process.argv[2].split(",");
+const directoriesToIgnore = process.argv[3].split(",");
+const extensions = process.argv[4];
 
 const comparator = "bruteforce";
 const differenceAlgorithm = "hamming";
@@ -81,34 +82,36 @@ function entryPoint() {
             // return;
         }
 
-        getAllFilesRecursively(rootPath, extensions).then((success) => {
+        for (let i = 0; i < directoriesToSearch.length; i++) {
+            console.log(directoriesToSearch[i])
+            getAllFilesRecursively(directoriesToSearch[i], extensions);
+        }
 
-            idsMediasProcessed = db.getIdsMediasAlreadyProcessed();
+        idsMediasProcessed = db.getIdsMediasAlreadyProcessed();
 
-            if (db.removeProcessedFiles()) {
-                const tempFilesSize = db.getTempFilesTableSize();
+        if (db.removeProcessedFiles()) {
+            const tempFilesSize = db.getTempFilesTableSize();
 
-                // If no new file was founded, we can assume that everything has already been compared
-                if (tempFilesSize <= 0 && skipWhenNoNewFiles) {
-                    console.log("No new files were founded on the path informed and its subdirectories. Skipping comparison.");
-                    let allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, []);
-                    let extensions = mediaTable.filter(m => m.service === serviceObjectName)[0].extensions;
-                    console.log(allDupes.length)
-                    allDupes = allDupes.filter(dupe => {
-                        return extensions.includes(dupe[0].extension);
-                    });
-                    console.log(allDupes.length)
-                    db.insertAllDuplicatesFound(allDupes);
-                    process.send({
-                        event: "processFinished", data: allDupes
-                    });
-                    return;
-                }
-
-                process.send({ event: "filesFounded", data: tempFilesSize });
-                processFilesChunk();
+            // If no new file was founded, we can assume that everything has already been compared
+            if (tempFilesSize <= 0 && skipWhenNoNewFiles) {
+                console.log("No new files were founded on the path informed and its subdirectories. Skipping comparison.");
+                let allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, []);
+                let extensions = mediaTable.filter(m => m.service === serviceObjectName)[0].extensions;
+                console.log(allDupes.length)
+                allDupes = allDupes.filter(dupe => {
+                    return extensions.includes(dupe[0].extension);
+                });
+                console.log(allDupes.length)
+                db.insertAllDuplicatesFound(allDupes);
+                process.send({
+                    event: "processFinished", data: allDupes
+                });
+                return;
             }
-        });
+
+            process.send({ event: "filesFounded", data: tempFilesSize });
+            processFilesChunk();
+        }
     } catch (ex) {
         console.error(ex);
         process.send({ event: "onException", data: { message: "Error while iterating", exception: ex } });
@@ -367,8 +370,12 @@ function processLshAlgorithmChunk() {
 }
 ///////////////////////////// End LSH algorithm ////////////////////////////////
 
-async function getAllFilesRecursively(base, ext = ['*'], files) {
+function getAllFilesRecursively(base, ext = ['*'], files) {
     try {
+        if (directoriesToIgnore.indexOf(base) > 0) {
+            return;
+        }
+
         try {
             files = files || fs.readdirSync(base);
         } catch (ex) { }
@@ -384,14 +391,14 @@ async function getAllFilesRecursively(base, ext = ['*'], files) {
             } catch (ex) { }
 
             if (isDirectory) {
-                await getAllFilesRecursively(newbase, ext, fs.readdirSync(newbase))
+                getAllFilesRecursively(newbase, ext, fs.readdirSync(newbase))
             }
             else {
                 try {
                     const extension = file.substr(file.lastIndexOf(".") + 1);
 
                     if (ext.includes(extension)) {
-                        await db.insertTempFile(newbase);
+                        db.insertTempFile(newbase);
 
                         process.send({
                             event: "fileFounded",
