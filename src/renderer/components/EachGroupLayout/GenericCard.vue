@@ -1,6 +1,8 @@
 <template>
-    <image-card :media="media" v-if="isImage"></image-card>
-    <image-card :media="media" v-else-if="isVideo"></image-card>
+    <div>
+        <image-card :media="media" v-if="isImage"></image-card>
+        <video-card :media="media" v-else-if="isVideo"></video-card>
+    </div>
 </template>
 
 <script>
@@ -21,10 +23,10 @@ export default {
     },
     computed: {
         isImage() {
-            return this.images.indexOf(this.media.extension);
+            return this.images.indexOf(this.media.extension) >= 0;
         },
         isVideo() {
-            return this.videos.indexOf(this.media.extension);
+            return this.videos.indexOf(this.media.extension) >= 0;
         }
     }
 }

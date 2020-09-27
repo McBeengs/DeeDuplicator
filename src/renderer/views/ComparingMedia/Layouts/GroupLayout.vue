@@ -124,10 +124,8 @@ export default {
             this.key++;
         },
         currentPage() {
-            setTimeout(() => {
-                document.body.scrollTop = 0;
-                document.documentElement.scrollTop = 0;
-            }, 500);
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
         }
     }
 }

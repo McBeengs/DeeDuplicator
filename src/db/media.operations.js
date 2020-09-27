@@ -31,6 +31,18 @@ module.exports = class MediaOperations {
         return result;
     }
 
+    getMediasByTempFiles(pathsMedias) {
+        let query = `SELECT * FROM media WHERE path IN (SELECT path FROM tempFiles)`;
+
+        const result = db.query(query);
+
+        if (!result.length || result.length <= 0) {
+            return [];
+        } else {
+            return result
+        }
+    }
+
     insertMedia(media) {
         return new Promise((resolve) => {
             const result =

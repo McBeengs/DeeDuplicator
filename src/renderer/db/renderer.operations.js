@@ -121,9 +121,11 @@ export default class RendererOperations {
             values = "";
             separator = "";
             for (let i = 0; i < ids.length; i++) {
-                values += separator + `${ids[i]}`;
+                values += separator + `${ids[i].id}`;
                 separator = ","
             }
+
+            console.log(values)
 
             db.execute(`DELETE FROM comparison WHERE a IN (${values})`);
             db.execute(`DELETE FROM comparison WHERE b IN (${values})`);

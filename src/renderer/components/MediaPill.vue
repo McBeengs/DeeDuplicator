@@ -55,7 +55,7 @@ export default {
     },
     methods: {
         pathMedia(media) {
-            if (this.videos.includes(media.extension)) {
+            if (this.videos.includes(media.extension.toLowerCase())) {
                 let directory = process.env.NODE_ENV === 'development' ? Path.resolve(__dirname, "../../../Thumbnails/videos") : Path.resolve(__dirname, "../../Thumbnails/videos");
 
                 // console.log(directory)

@@ -42,8 +42,7 @@ export default {
     methods: {
         pathMedia(media) {
             let directory = process.env.NODE_ENV === 'development' ? Path.resolve(__dirname, "../../../../Thumbnails/videos") : Path.resolve(__dirname, "../../Thumbnails/videos");
-
-                return Path.join(directory, Buffer.from(media.path).toString('base64') + ".png")
+            return Path.join(directory, Buffer.from(media.path).toString('base64') + ".png")
         },
         formatBytes(bytes, decimals) {
             if (bytes === 0) {

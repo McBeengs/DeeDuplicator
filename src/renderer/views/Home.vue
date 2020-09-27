@@ -49,7 +49,7 @@ export default {
     },
     data() {
         return {
-            listBoxesOptions: ["D:\\The Vault", "E:\\", "F:\\Torrents"],
+            listBoxesOptions: ["E:\\"], // "D:\\The Vault\\Real", "D:\\Windows\\Downloads\\[JDownloader]", "E:\\", "F:\\Torrents"
             selectedListBoxedOptions: []
         };
     },
@@ -95,13 +95,14 @@ export default {
 
             // ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
             // ["png", "jpg", "jpeg", "gif"]
+            // ["zip", "rar"]
 
             this.$store.dispatch({
                 type: "setPreparedSearch",
                 preparedSearch: {
                     directories: [...this.listBoxesOptions],
                     excludedDirectories: [...this.selectedListBoxedOptions],
-                    extensions: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
+                    extensions: ["zip", "rar"]
                 }
             });
 

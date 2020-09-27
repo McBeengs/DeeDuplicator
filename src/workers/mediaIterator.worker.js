@@ -34,9 +34,9 @@ const directoriesToSearch = process.argv[2].split(",");
 const directoriesToIgnore = process.argv[3].split(",");
 const extensions = process.argv[4];
 
-const comparator = "bruteforce";
+const comparator = "lsh";
 const differenceAlgorithm = "hamming";
-const threshold = 0.90;
+const threshold = 0.95;
 const serviceOptions = {
     generateGifs: false
 };
@@ -83,11 +83,13 @@ function entryPoint() {
         }
 
         for (let i = 0; i < directoriesToSearch.length; i++) {
-            console.log(directoriesToSearch[i])
             getAllFilesRecursively(directoriesToSearch[i], extensions);
         }
 
         idsMediasProcessed = db.getIdsMediasAlreadyProcessed();
+
+        // Store the medias that already exists to use them in the getDUplicateMedias call if no new files were found
+        let medias = db.getMediasByTempFiles();
 
         if (db.removeProcessedFiles()) {
             const tempFilesSize = db.getTempFilesTableSize();
@@ -95,18 +97,22 @@ function entryPoint() {
             // If no new file was founded, we can assume that everything has already been compared
             if (tempFilesSize <= 0 && skipWhenNoNewFiles) {
                 console.log("No new files were founded on the path informed and its subdirectories. Skipping comparison.");
-                let allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, []);
+
+                // Only return files that are inside the folders marked as to not return everything ever compared
+                let allDupes = db.getDuplicateMedias(differenceAlgorithm, threshold, medias);
                 let extensions = mediaTable.filter(m => m.service === serviceObjectName)[0].extensions;
-                console.log(allDupes.length)
+
                 allDupes = allDupes.filter(dupe => {
                     return extensions.includes(dupe[0].extension);
                 });
-                console.log(allDupes.length)
+
                 db.insertAllDuplicatesFound(allDupes);
                 process.send({
                     event: "processFinished", data: allDupes
                 });
                 return;
+            } else {
+                medias = [];
             }
 
             process.send({ event: "filesFounded", data: tempFilesSize });
@@ -397,7 +403,7 @@ function getAllFilesRecursively(base, ext = ['*'], files) {
                 try {
                     const extension = file.substr(file.lastIndexOf(".") + 1);
 
-                    if (ext.includes(extension)) {
+                    if (ext.includes(extension.toLowerCase())) {
                         db.insertTempFile(newbase);
 
                         process.send({
