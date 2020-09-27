@@ -22,7 +22,7 @@ const mediaTable = [
     },
     {
         extensions: ["zip", "rar"],
-        service: "compressed.service"
+        service: "generic.service"
     }
 ]
 let service;
@@ -194,9 +194,6 @@ function processFilesChunk() {
 }
 
 function compareAlgorithm(comparator) {
-    let ServiceObject = require(`../services/${serviceObjectName}`);
-    service = new ServiceObject();
-    
     switch (comparator) {
         default:
         case "lsh":

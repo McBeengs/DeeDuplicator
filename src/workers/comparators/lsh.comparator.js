@@ -4,7 +4,7 @@ require("amd-loader");
 let dupesFound = [];
 
 define(['workerpool/dist/workerpool'], function (workerpool) {
-    function compare(combinationChunk, differenceAlgorithm, threshold, serviceObjectName) {
+    async function compare(combinationChunk, differenceAlgorithm, threshold, serviceObjectName) {
         let ServiceObject = require(`../../services/${serviceObjectName}`);
         const service = new ServiceObject();
 
@@ -27,7 +27,7 @@ define(['workerpool/dist/workerpool'], function (workerpool) {
             //     }
             // }
 
-            const distance = service.compareMedia(fileBeingCompared, fileToCompare, differenceAlgorithm);
+            const distance = await service.compareMedia(fileBeingCompared, fileToCompare, differenceAlgorithm);
             if (distance >= threshold) {
                 const dupe = { 
                     idMediaA: fileBeingCompared.id, 

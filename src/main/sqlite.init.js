@@ -67,6 +67,15 @@ export function initializeSQLite() {
     )`);
     video.run();
 
+    const genericFiles = db.prepare(`
+    CREATE TABLE IF NOT EXISTS genericFile (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        idMedia INTEGER NOT NULL,
+        md5 VARCHAR(50) NOT NULL,
+        binaryHash NUMERIC NOT NULL
+    )`);
+    genericFiles.run();
+
     const mediaException = db.prepare(`
     CREATE TABLE IF NOT EXISTS mediaException (
         path TEXT NOT NULL
