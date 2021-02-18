@@ -43,6 +43,7 @@ import GroupLayout from './Layouts/GroupLayout.vue'
 import EachGroupLayout from './Layouts/EachGroupLayout.vue'
 import RendererOperations from '../../db/renderer.operations'
 const db = new RendererOperations();
+const hammingDistance = require('hamming');
 
 import { Menu } from './comparingSideMenu.js'
 
@@ -220,81 +221,24 @@ export default {
         customCheckBBW() {
             for (let i = 0; i < this.duplicateGroups.length; i++) {
                 const group = this.duplicateGroups[i];
-                
-                group.reduce((prev, current) => {
-                    if (!prev || !current) {
-                        return;
-                    }
-
-                    prev.checked = false;
-                    current.checked = false;
-
-                    if (
-                        prev.path.indexOf("\\Sort\\") > 0 ||
-                        prev.path.indexOf("\\Downloads\\") > 0
-                    ) {
-                        prev.checked = true;
-                    }
-
-                    if (
-                        current.path.indexOf("\\Sort\\") > 0 ||
-                        current.path.indexOf("\\Downloads\\") > 0
-                    ) {
-                        current.checked = true;
-                    }
-                });
-
-                // for (let i = 0; i < group.length; i++) {}
 
                 if (group.length === 2) {
                     let a = group[0];
                     let b = group[1];
 
-                    a.checked = false;
-                    b.checked = false;
+                    this.customCheckBBWMethod(a, b);
+                } else {
+                    for (let i = 0; i < group.length; i++) {
+                        const a = group[i];
+                        
+                        for (let j = 0; j < group.length; j++) {
+                            const b = group[j];
 
-                    if (
-                        a.path.indexOf("\\Sort\\") > 0 ||
-                        a.path.indexOf("\\Downloads\\") > 0 || 
-                        a.path.indexOf("\\Misc") > 0
-                    ) {
-                        if (a.size > b.size) {
-                            b.checked = true;
-                        } else {
-                            a.checked = true;
-                        }
-                    }
+                            if (a === b) {
+                                continue;
+                            }
 
-                    if (
-                        b.path.indexOf("\\Sort\\") > 0 ||
-                        b.path.indexOf("\\Downloads\\") > 0 ||
-                        b.path.indexOf("\\Misc") > 0
-                    ) {
-                        if (b.size > a.size) {
-                            a.checked = true;
-                        } else {
-                            b.checked = true;
-                        }
-                    }
-
-                    let absPathA = a.path.substring(0, a.path.lastIndexOf("\\"));
-                    let absPathB = b.path.substring(0, b.path.lastIndexOf("\\"));
-
-                    if (absPathA === absPathB) {
-                        if (a.size > b.size) {
-                            b.checked = true;
-                        } else {
-                            a.checked = true;
-                        }
-                    } else {
-                        if ((a.path.indexOf("BBW-Chan") <= 0) && b.path.indexOf("BBW-Chan") > 0) {
-                            a.checked = true
-                            b.checked = false
-                        }
-
-                        if ((b.path.indexOf("BBW-Chan") <= 0) && a.path.indexOf("BBW-Chan") > 0) {
-                            b.checked = true
-                            a.checked = false
+                            this.customCheckBBWMethod(a, b);
                         }
                     }
                 }
@@ -303,6 +247,87 @@ export default {
                 type: "setRefreshDuplicateGroups",
                 refreshDuplicateGroups: Math.random()
             });
+        },
+
+        customCheckBBWMethod(a, b) {
+            a.checked = false;
+            b.checked = false;
+
+            let scoreA = 0;
+            let scoreB = 0;
+
+            if (
+                a.path.indexOf("\\Sort\\") > 0 ||
+                a.path.indexOf("\\Downloads\\") > 0 || 
+                a.path.indexOf("\\Misc") > 0
+            ) {
+                if (a.size > b.size) {
+                    scoreB += 10;
+                } else {
+                    scoreA += 10;
+                }
+            }
+
+            if (
+                b.path.indexOf("\\Sort\\") > 0 ||
+                b.path.indexOf("\\Downloads\\") > 0 ||
+                b.path.indexOf("\\Misc") > 0
+            ) {
+                if (b.size > a.size) {
+                    scoreA += 10;
+                } else {
+                    scoreB += 10;
+                }
+            }
+
+            let absPathA = a.path.substring(0, a.path.lastIndexOf("\\"));
+            let absPathB = b.path.substring(0, b.path.lastIndexOf("\\"));
+
+            if (absPathA === absPathB) { // Files have the same name
+                if (a.size > b.size) {
+                    scoreB += 20;
+                } else {
+                    scoreA += 20;
+                }
+            } else {
+                if ((a.path.indexOf("BBW-Chan") <= 0) && b.path.indexOf("BBW-Chan") > 0) { // File A is inside BBW-Chan while B is otherwise
+                    scoreA += 20;
+                    scoreB -= 20;
+                }
+
+                if ((b.path.indexOf("BBW-Chan") <= 0) && a.path.indexOf("BBW-Chan") > 0) { // File B is inside BBW-Chan while A is otherwise
+                    scoreA -= 20;
+                    scoreB += 20;
+                }
+
+                if (a.path.indexOf("BBW-Chan") <= 0 && b.path.indexOf("BBW-Chan") <= 0) { // Neither of them are BBW-Chan (likely StufferDB or Torrents)
+                    if (a.path.indexOf("StufferDB") > 0 && b.path.indexOf("StufferDB") > 0) { // Both are StufferDB
+                        if (a.size > b.size) {
+                            scoreA += 20;
+                        } else {
+                            scoreB += 20;
+                        }
+                    }
+                }
+            }
+
+            if (scoreA === scoreB && scoreA === 0) { // Both are equal  and none scored, so must be completely different
+                return;
+            }
+
+            let distance = 0;
+            let bigger = 0;
+            distance = hammingDistance(a.videoPHash, b.videoPHash);
+            bigger = Math.max(a.videoPHash.length, b.videoPHash.length)
+            distance = (bigger - distance) / bigger // We need to divide by 100 ?
+
+            if (distance >= 0.75) {
+                if (scoreA >= 10) {
+                    a.checked = true;
+                } else if (scoreB >= 10) {
+                    b.checked = true;
+                }
+            }
         },
 
         checkBySize(size) {

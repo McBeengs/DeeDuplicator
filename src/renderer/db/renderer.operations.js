@@ -9,7 +9,15 @@ export default class RendererOperations {
 
     getDuplicates() {
         try {
-            let query = db.query("SELECT * FROM tempDuplicates");
+            let query = db.query(`
+            SELECT 
+                tempDuplicates.*,
+                image.pHash AS 'imagePHash',
+                video.pHash AS 'videoPHash'
+            FROM tempDuplicates
+            LEFT JOIN image ON image.idMedia = tempDuplicates.id
+            LEFT JOIN video ON video.idMedia = tempDuplicates.id
+            `);
 
             if (!query || query.length <= 0) {
                 return [];

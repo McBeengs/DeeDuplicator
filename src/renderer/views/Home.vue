@@ -49,7 +49,15 @@ export default {
     },
     data() {
         return {
-            listBoxesOptions: ["E:\\"], // "D:\\The Vault\\Real", "D:\\Windows\\Downloads\\[JDownloader]", "E:\\", "F:\\Torrents"
+            listBoxesOptions: [
+                "D:\\The Vault\\Real",
+                "D:\\Windows\\Downloads\\[JDownloader]",
+                //"D:\\The Vault\\Artwork & Comics\\FurAffinity",
+                "E:\\kemono.party",
+                "F:\\Torrents",
+                "F:\\LinkSnappy week",
+                "F:\\[JDownloader]"
+            ], // "D:\\The Vault\\Real", "D:\\Windows\\Downloads\\[JDownloader]", "E:\\", "F:\\Torrents"
             selectedListBoxedOptions: []
         };
     },
@@ -102,7 +110,7 @@ export default {
                 preparedSearch: {
                     directories: [...this.listBoxesOptions],
                     excludedDirectories: [...this.selectedListBoxedOptions],
-                    extensions: ["zip", "rar"]
+                    extensions: ["mp4", "m4v", "avi", "wmv", "3gp", "webm", "mpg", "mpeg", "mov", "flv", "mkv", "divx"]
                 }
             });
 

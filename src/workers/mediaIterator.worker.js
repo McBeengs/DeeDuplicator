@@ -34,9 +34,9 @@ const directoriesToSearch = process.argv[2].split(",");
 const directoriesToIgnore = process.argv[3].split(",");
 const extensions = process.argv[4];
 
-const comparator = "lsh";
+const comparator = "bruteforce";
 const differenceAlgorithm = "hamming";
-const threshold = 0.95;
+const threshold = 0.80;
 const serviceOptions = {
     generateGifs: false
 };
@@ -212,7 +212,7 @@ let comparedIds = [];
 function bruteforceAlgorithm() {
     comparatorPool = workerpool.pool(path.resolve(__dirname, `./comparators/bruteforce.comparator.js`), {
         minWorkers: 1,
-        maxWorkers: 10
+        maxWorkers: 24
     });
 
     // mediaToCompare = db.getNonComparedMedias(idsMediasProcessed);
@@ -282,6 +282,10 @@ function lshAlgorithm() {
         minWorkers: 10,
         maxWorkers: 24
     });
+
+    let ServiceObject = require(`../services/${serviceObjectName}`);
+
+    service = new ServiceObject();
 
     const prepare = require("./comparators/lsh/PrepareLSHDataset");
     buckets = prepare.getBuckets(idsMediasProcessed, service);
